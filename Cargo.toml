@@ -1,0 +1,9 @@
+[package]
+name = "bookwerx-core-rust"
+version = "0.1.0"
+authors = ["Thomas Radloff <bostontrader@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "0.7"  # This is the http server framework
+mysql = "16.0.2"   # You know what this is
