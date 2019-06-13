@@ -1,9 +1,12 @@
 [package]
 name = "bookwerx-core-rust"
-version = "0.1.0"
+version = "0.1.1" #
 authors = ["Thomas Radloff <bostontrader@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "0.7"  # This is the http server framework
-mysql = "16.0.2"   # You know what this is
+clap = "2.33" # Command line args
+
+# These are actually dev-dependencies.  But if I configure them so, then I cannot generate documentation for them.  Hence, do this.
+assert_cmd = "0.11.1"
+predicates = "1.0.1"

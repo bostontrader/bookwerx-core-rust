@@ -1,6 +1,6 @@
 # Introduction
 
-[![Build Status](https://travis-ci.org/bostontrader/bookwerx-core-rust.svg?branch=master)](https://travis-ci.org/bostontrader/bookwerx-core-rust)
+[![Build Status](https://travis-ci.org/bostontrader/bookwerx-core-rust.png?branch=master)](https://travis-ci.org/bostontrader/bookwerx-core-rust)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
 The purpose of **bookwerx-core-rust** is to provide an API that supports multi-currency
@@ -14,7 +14,7 @@ quickly encounter the need for bookkeeping.  Rolling your own methods is, as usu
 With this API, the user can:
 
 * Perform ordinary CRUD operations on the various bookkeeping objects,
-such as accounts and transactions.
+such as accounts, currencies, and transactions.
 
 * Perform consistency checks.
 
@@ -36,4 +36,38 @@ The care and feeding of these items are beyond the scope of these instructions.
 ```bash
 git clone https://github.com/bostontrader/bookwerx-core-rust.git
 cd bookwerx-core-rust
+cargo build
+cargo run -- --help
 ```
+
+Note the syntax for *cargo run*.  This executes the server and feeds the command-line arg '--help' to it.
+
+
+### Configuration
+
+*bookwerx-core-rust* does not do anything by default.  If you want it to do anything useful, you'll need to ensure that it gets the correct configuration options.  You can deliver said options via command line options or the environment with the CLI having precedence.
+
+Execute *bookwerx-core-rust* with the --help option to see the CLI choices.  Each option has a corresponding environment variable.
+
+*bookwerx-core-rust* Uses the following environment variables.  Each of these have a corresponding CLI option:
+
+BCR_CONN - A connection string to connect to the MySQL db.
+
+BCR_INIT - The mere presence of this will cause the MySQL db to be initialized. 
+
+
+### Testing
+
+Integration tests:
+
+The first part of integration testing is to crank up *bookwerx-core-rust* and study the presence or absence of suitable command line args and environment variables.
+
+*bookwerx-core-rust* uses the 3rd party crate 'clap' in order to manage the CLI.  We won't bother to test its functionality.  So for example we won't test that --help produces a help screen, we will always use the --long-form of an option and won't test that the -s(short form) also works, nor will we test that --not-a-real-option produces a suitable error message.  
+
+That said, test...
+
+1. If neither --conn nor BCR_CONN are specified, the server will complain and exit.
+
+2. If BCR_CONN is specified, the startup message will mention it.
+
+3. If both the BCR_CONN and the --conn option are specified, the startup message mentions the value from the connection string.
