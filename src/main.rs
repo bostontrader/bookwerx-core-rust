@@ -6,7 +6,9 @@ use std::io;
 
 // These are _almost_ duplicated in tests.  How can I DRY this?
 const CONN_KEY_CLI: &str = "conn";
+const INIT_KEY_CLI: &str = "init";
 const CONN_KEY_ENV: &str = "BCR_CONN";
+const INIT_KEY_ENV: &str = "BCR_INIT";
 
 fn main() {
 
@@ -16,7 +18,7 @@ fn main() {
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db.")
-        (@arg init: -i --init "Initialize the db.")
+        (@arg init: -i --init ... "Initialize the db.")
     ).get_matches();
 
 
@@ -32,6 +34,19 @@ fn main() {
                     println!("Fatal error: No db connection string available.");
                     ::std::process::exit(1);
                 }
+        }
+    }
+
+    // 3. React to the initialization flag, if available
+    if matches.is_present(INIT_KEY_CLI) {
+        println!("Initializing the db due to configuration as set from the command line.");
+    } else {
+        match env::var(INIT_KEY_ENV) {
+            Ok(_x) =>
+                println!("Initializing the db due to configuration as set from the environment."),
+            Err(_) => {
+                println!("Nada");
+            } // Nobody cares.  Just don't do any initialization.
         }
     }
 
