@@ -29,6 +29,8 @@ such as accounts, currencies, and transactions.
 
 * You will need mysql.
 
+* You will need docker (needed by the tests.)
+
 The care and feeding of these items are beyond the scope of these instructions.
 
 ### But assuming they are correctly installed...
@@ -51,7 +53,7 @@ Execute **bookwerx-core-rust** with the --help option to see the CLI choices.  E
 
 **bookwerx-core-rust** Uses the following environment variables.  Each of these have a corresponding CLI option:
 
-BCR_CONN - A connection string to connect to the MySQL db.
+BCR_CONN - A connection string to connect to the MySQL db.  For example mysql://root:catfood@192.168.0.103:3306.
 
 BCR_INIT - The mere presence of this will cause the MySQL db to be initialized. 
 
@@ -62,7 +64,11 @@ Integration tests:
 
 The first part of integration testing is to crank up **bookwerx-core-rust** and study the presence or absence of suitable command line args and environment variables.
 
-**bookwerx-core-rust** uses the 3rd party crate 'clap' in order to manage the CLI.  We won't bother to test its functionality.  So for example we won't test that --help produces a help screen, we will always use the --long-form of an option and won't test that the -s(short form) also works, nor will we test that --not-a-real-option produces a suitable error message.  
+**bookwerx-core-rust** uses the 3rd party crate 'clap' in order to manage the CLI.  We won't bother to test its functionality.  So for example we won't test that --help produces a help screen, we will always use the --long-form of an option and won't test that the -s(short form) also works, nor will we test that --not-a-real-option produces a suitable error message.
+
+When **bookwerx-core-rust** is executed, it must have access to a MySQL server, even during integration testing.  Please examine .travis.yml to see how we easily we use docker to install and run a MariaDB image that we can subsequently use for testing.
+  
+The testing must therefore have _some_ connection string.  .travis.yml hardwires some of this and the integration tests will also hardwire suitable values to be compatible.  Given this hardwiring, we must therefore be careful to keep these things in sync.  I don't like this hardwiring, but it's not obvious to me how we can DRY this.  IMHO, tolerating this nuisance is simply the best choice.
 
 That said, test...
 
