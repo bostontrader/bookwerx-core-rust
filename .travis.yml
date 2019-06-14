@@ -7,5 +7,4 @@ services:
 
 before_install:
   - docker pull mariadb:10.4.5
-  - docker run -d -p 127.0.0.1:3306:3306 -e MYSQL_ROOT_PASSWORD=supersecretpassword mariadb:10.4.5
-
+  - docker run -d -p 127.0.0.1:3306:3306 -e MYSQL_ROOT_PASSWORD=supersecretpassword
