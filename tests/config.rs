@@ -22,7 +22,7 @@ fn conn_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@127.0.0.1:3306, as set from the environment."));
+        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@172.72.0.2:3306, as set from the environment."));
 
     Ok(())
 }
@@ -36,7 +36,7 @@ fn conn_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@127.0.0.1:3306, as set from the command line."));
+        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@172.72.0.2:3306, as set from the command line."));
     Ok(())
 }
 
@@ -52,7 +52,7 @@ fn conn_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
 
     cmd.assert()
         .success()
-        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@127.0.0.1:3306, as set from the command line."));
+        .stdout(predicate::str::contains("Accessing the db via connection string mysql://root:supersecretpassword@172.72.0.2:3306, as set from the command line."));
     Ok(())
 }
 
