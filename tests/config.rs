@@ -74,7 +74,7 @@ fn init_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     cmd.env(C::CONN_KEY_ENV,C::TEST_CONN_STR)
-        .env(C::INIT_KEY_ENV,"1");
+        .env(C::INIT_KEY_ENV,C::MYSQL_SEED);
 
     cmd.assert()
         .success()
@@ -86,8 +86,11 @@ fn init_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
 fn init_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
+    // We are only testing init, but we must also have conn.  Ignore this.
     cmd.env(C::CONN_KEY_ENV,C::TEST_CONN_STR)
-        .arg(format!("--{}", C::INIT_KEY_CLI));
+
+        .arg(format!("--{}", C::INIT_KEY_CLI))
+        .arg(C::MYSQL_SEED);
 
     cmd.assert()
         .success()

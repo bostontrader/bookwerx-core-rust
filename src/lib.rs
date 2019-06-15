@@ -6,6 +6,7 @@ pub mod constants {
     pub const INIT_KEY_ENV :&str = "BCR_INIT";
     pub const INIT_KEY_CLI :&str = "init";
 
+    pub const MYSQL_SEED :&str = "dbseed.sql";
     pub const TEST_CONN_STR :&str = "mysql://root:supersecretpassword@172.17.0.2:3306";
 
 }

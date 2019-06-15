@@ -9,8 +9,8 @@ fn main() {
         (version: "0.1.1") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
-        (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db.")
-        (@arg init: -i --init ... "Initialize the db.")
+        (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
+        (@arg init: -i --init +takes_value "Initialize the db using the given seed file.")
     ).get_matches();
 
 
