@@ -1,3 +1,4 @@
+use actix_web::{server, App, HttpRequest};
 use bookwerx_core_rust::constants as C;
 use clap::clap_app;
 use std::env;
@@ -6,6 +7,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
+fn index(_req: &HttpRequest) -> &'static str {
+    "Hello world!"
+}
+
 fn main() {
 
     // 1. Configure the CLI
@@ -13,6 +18,7 @@ fn main() {
         (version: "0.1.2") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
+        (@arg bind: -b --bind +takes_value "Which IP and port shall the http server bind to? For example 127.0.0.1:3003")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
         (@arg db: -d --db +takes_value "The database name to use.")
         (@arg init: -i --init +takes_value "Initialize the db using the given seed file.")
@@ -118,7 +124,7 @@ fn main() {
 
             // If there is a seed, wipe the db and re-init.
             if !seed.is_empty() {
-                match _conn.query(format!("DROP DATABASE IF EXISTS `{0}`; CREATE DATABASE `{0}`;;", db_name)) {
+                match _conn.query(format!("DROP DATABASE IF EXISTS `{0}`; CREATE DATABASE `{0}`;", db_name)) {
                     Ok(_) => {
                         println!("drop and create success");
                     }
@@ -158,6 +164,40 @@ fn main() {
 
 
     }
+
+    // 7. Obtain the http server binding, if available.
+    let mut bind_string;
+    match cli_matches.value_of(C::BIND_KEY_CLI) {
+        Some(_x) => {
+            println!("The HTTP server will bind to [{}], as specified from the command line.", _x);
+            bind_string = _x.to_string();
+        }
+        None =>
+            match env::var(C::BIND_KEY_ENV) {
+                Ok(_x) => {
+                    println!("The HTTP server will bind to [{}], as specified in the environment.", _x);
+                    bind_string = _x;
+                }
+
+                Err(_) => {
+                    println!("Fatal error: No http binding configuration available.");
+                    ::std::process::exit(1);
+                }
+            }
+    }
+
+    // 8. Now let's crank up the http server.
+    match server::new(|| App::new().resource("/", |r| r.f(index))).bind(&bind_string) {
+        Ok(_result) => {
+            println!("Bind success.");
+            println!("Ctrl-C to stop.");
+            _result.run();
+        }
+        Err(why) => {
+            println!("Bind failure: {}", why.description());
+            ::std::process::exit(1);
+        }
+    };
 
 }
 

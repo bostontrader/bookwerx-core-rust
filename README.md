@@ -52,6 +52,8 @@ Execute **bookwerx-core-rust** with the --help option to see the CLI choices.  E
 
 **bookwerx-core-rust** Uses the following environment variables.  Each of these have a corresponding CLI option:
 
+BCR_BIND - Which IP and port shall the http server bind to? For example 127.0.0.1:3003
+
 BCR_CONN - A connection string to connect to the MySQL db.  For example: mysql://root:catfood@192.168.0.103:3306
 Notice that there is no trailing \ nor a database name.
 
@@ -119,3 +121,12 @@ Test this variation in the seed file errors...
 3.2.2 If the seed file, as configured via the environment, can be read but it contains invalid SQL, fatal error.
 
 3.2.3 Given a good seed file that exists, can be read, and is valid SQL, the server will claim successful initialization.  Do this using a good name via the command line and a bad name via the environment to test that the CLi has precedence.
+
+4.1 If neither --bind nor BCR_BIND are specified, the server will complain and exit.  
+
+4.2 If either one of --bind or BCR_BIND are _incorrectly_ specified, the startup message will mention it.  But the server will terminate with an error message.  Here we test that we can feed the configuration, even if nonsense.  In this case we _want_ nonsense because we don't yet want the server to fully start.
+
+
+At this point I will accept on faith that we can specify both --bind and BCR_BIND and that --bind will have precedence and if it's a bad bind, the server will squeal.
+
+It's now tempting to turn on the server with a 100% correct configuration and observe its operation.  However when we start the HTTP part of the server, that's a blocking operation for the test.  I have yet to figure out how to test this part.
