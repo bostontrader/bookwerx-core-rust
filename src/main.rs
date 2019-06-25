@@ -1,4 +1,5 @@
-use actix_web::{server, App, HttpRequest};
+use actix_web::{web, App, Responder, HttpServer};
+
 use bookwerx_core_rust::constants as C;
 use clap::clap_app;
 use std::env;
@@ -7,9 +8,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
-fn index(_req: &HttpRequest) -> &'static str {
-    "Hello world!"
+fn index(info: web::Path<(String, u32)>) -> impl Responder {
+    format!("Hello {}! id:{}", info.0, info.1)
 }
+
 
 fn main() {
 
@@ -187,7 +189,8 @@ fn main() {
     }
 
     // 8. Now let's crank up the http server.
-    match server::new(|| App::new().resource("/", |r| r.f(index))).bind(&bind_string) {
+    match HttpServer::new(|| App::new().service(web::resource("/{name}/{id}/index.html").to(index))
+    ).bind(&bind_string) {
         Ok(_result) => {
             println!("Bind success.");
             println!("Ctrl-C to stop.");

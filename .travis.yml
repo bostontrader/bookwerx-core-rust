@@ -2,6 +2,9 @@ language: rust
 rust:
   - 1.35.0
 
+env:
+  - RUST_BACKTRACE=1 RUST_TEST_THREADS=1
+
 services:
   - docker
 

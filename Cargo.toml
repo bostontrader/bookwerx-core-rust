@@ -5,7 +5,7 @@ authors = ["Thomas Radloff <bostontrader@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "0.7"
+actix-web = "1.0.2"
 clap = "2.33" # Command line args
 mysql = "16.0.2"
 
