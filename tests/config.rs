@@ -12,7 +12,7 @@ We cannot reasonably control the order of execution of these tests and each test
 */
 
 // Prepare the battlefield for the test.
-fn establishInitialConditions() {
+fn establish_initial_conditions() {
 
     match mysql::Conn::new(C::TEST_CONN_STR) {
         Ok(mut _conn) => {
@@ -38,7 +38,7 @@ fn establishInitialConditions() {
 #[test] // 1.1
 fn conn_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
-    establishInitialConditions();
+    establish_initial_conditions();
 
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
     cmd.assert()
@@ -112,6 +112,9 @@ fn db_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
 #[test] // 2.2
 fn db_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
+
+    establish_initial_conditions();
+
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
@@ -131,6 +134,9 @@ fn db_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
 
 #[test] // 2.2
 fn db_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
+
+    establish_initial_conditions();
+
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
@@ -150,6 +156,9 @@ fn db_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
 #[test] // 2.3
 // The value set in the command line should override whatever is in the environment.
 fn db_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
+
+    establish_initial_conditions();
+
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
