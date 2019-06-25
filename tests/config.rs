@@ -289,10 +289,10 @@ fn bind_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
     // This is what we're really testing
         .env(C::BIND_KEY_ENV,C::TEST_BIND);
 
-    //cmd.assert()
+    cmd.assert()
     //    .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified in the environment.", C::TEST_BIND)))
     //    .stdout(predicate::str::contains(format!("Bind failure")))
-    //    .failure();
+        .failure();
 
     Ok(())
 }
