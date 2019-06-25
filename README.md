@@ -5,7 +5,7 @@
 
 The purpose of ***bookwerx-core-rust*** is to provide an API that supports multi-currency
  bookkeeping, using the double-entry bookkeeping model, slightly adapted to squeeze 
- in multiple currencies.  It uses [rust](https://www.rust-lang.org), [rocket](https://rocket.rs), and [mysql](https://www.mysql.com).
+ in multiple currencies.  It uses [rust](https://www.rust-lang.org), [actix](https://actix.rs), and [mysql](https://www.mysql.com).
 
 Any application that deals with "money" (fiat, precious metals, cryptocoins) will
 quickly encounter the need for bookkeeping.  Rolling your own methods is, as usual,
