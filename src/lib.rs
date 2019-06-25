@@ -13,7 +13,7 @@ pub mod constants {
 
     pub const MYSQL_SEED_FILE :&str = "dbseed.sql";
     pub const INVALID_SEED_FILE :&str = "tests/invalid-seed.sql";
-    pub const TEST_BIND :&str = "127.0.0.1:80"; // This is an intentionally unbindable address.
+    pub const TEST_BIND :&str = "lokalhost:catf00d"; // This is an intentionally unbindable address.
     pub const TEST_CONN_STR :&str = "mysql://root:supersecretpassword@172.17.0.2:3306";
     pub const TEST_DB_NAME :&str = "bookwerx-core-rust-test";
 

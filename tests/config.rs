@@ -290,8 +290,8 @@ fn bind_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
         .env(C::BIND_KEY_ENV,C::TEST_BIND);
 
     cmd.assert()
-    //    .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified in the environment.", C::TEST_BIND)))
-    //    .stdout(predicate::str::contains(format!("Bind failure")))
+        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified in the environment.", C::TEST_BIND)))
+        .stdout(predicate::str::contains(format!("Bind failure")))
         .failure();
 
     Ok(())
@@ -311,10 +311,10 @@ fn bind_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
         .arg(format!("--{}", C::BIND_KEY_CLI))
         .arg(C::TEST_BIND);
 
-    //cmd.assert()
-    //    .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified from the command line.", C::TEST_BIND)))
-    //    .stdout(predicate::str::contains(format!("Bind failure")))
-    //    .failure();
+    cmd.assert()
+        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified from the command line.", C::TEST_BIND)))
+        .stdout(predicate::str::contains(format!("Bind failure")))
+        .failure();
 
     Ok(())
 }
