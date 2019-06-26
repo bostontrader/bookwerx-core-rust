@@ -1,16 +1,15 @@
-use actix_web::{web, App, Responder, HttpServer};
+#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use] extern crate rocket;
 
 use bookwerx_core_rust::constants as C;
+use bookwerx_core_rust::routes as R;
+
 use clap::clap_app;
 use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-
-fn index(info: web::Path<(String, u32)>) -> impl Responder {
-    format!("Hello {}! id:{}", info.0, info.1)
-}
 
 
 fn main() {
@@ -28,7 +27,7 @@ fn main() {
 
 
     // 2. Obtain a connection string, if available.
-    let mut conn_string;
+    let conn_string;
     match cli_matches.value_of(C::CONN_KEY_CLI) {
         Some(_x) => {
             println!("Accessing the db via connection string [{}], as set from the command line.", _x);
@@ -49,7 +48,7 @@ fn main() {
     }
 
     // 3. Obtain a db name, if available.
-    let mut db_name;
+    let db_name;
     match cli_matches.value_of(C::DB_KEY_CLI) {
         Some(_x) => {
             println!("Using database [{}], as set from the command line.", _x);
@@ -168,7 +167,7 @@ fn main() {
     }
 
     // 7. Obtain the http server binding, if available.
-    let mut bind_string;
+    let bind_string;
     match cli_matches.value_of(C::BIND_KEY_CLI) {
         Some(_x) => {
             println!("The HTTP server will bind to [{}], as specified from the command line.", _x);
@@ -188,19 +187,7 @@ fn main() {
             }
     }
 
-    // 8. Now let's crank up the http server.
-    match HttpServer::new(|| App::new().service(web::resource("/{name}/{id}/index.html").to(index))
-    ).bind(&bind_string) {
-        Ok(_result) => {
-            println!("Bind success.");
-            println!("Ctrl-C to stop.");
-            _result.run();
-        }
-        Err(why) => {
-            println!("Bind failure: {}", why.description());
-            ::std::process::exit(1);
-        }
-    };
+    rocket::ignite().mount("/", routes![R::index]).launch();
 
 }
 

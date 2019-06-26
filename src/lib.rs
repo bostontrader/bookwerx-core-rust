@@ -1,3 +1,6 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+#[macro_use] extern crate rocket;
+
 pub mod constants {
 
     pub const CARGO_BIN :&str = "bookwerx-core-rust";
@@ -13,8 +16,17 @@ pub mod constants {
 
     pub const MYSQL_SEED_FILE :&str = "dbseed.sql";
     pub const INVALID_SEED_FILE :&str = "tests/invalid-seed.sql";
-    pub const TEST_BIND :&str = "lokalhost:catf00d"; // This is an intentionally unbindable address.
+    pub const TEST_BIND_BAD :&str = "lokalhost:catf00d";
+    pub const TEST_BIND_GOOD :&str = "localhost:6666";
     pub const TEST_CONN_STR :&str = "mysql://root:supersecretpassword@172.17.0.2:3306";
     pub const TEST_DB_NAME :&str = "bookwerx-core-rust-test";
 
+}
+
+pub mod routes {
+
+    #[get("/")]
+    pub fn index() -> &'static str {
+        "Hello, world!"
+    }
 }

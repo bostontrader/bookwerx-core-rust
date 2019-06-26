@@ -259,7 +259,7 @@ fn init_with_valid_seed_file_cli_override_env() -> Result<(), Box<std::error::Er
     Ok(())
 }
 
-#[test] // 4.1
+/*#[test] // 4.1
 fn bind_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
@@ -287,10 +287,10 @@ fn bind_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
         .env(C::INIT_KEY_ENV,C::MYSQL_SEED_FILE)
 
     // This is what we're really testing
-        .env(C::BIND_KEY_ENV,C::TEST_BIND);
+        .env(C::BIND_KEY_ENV,C::TEST_BIND_BAD);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified in the environment.", C::TEST_BIND)))
+        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified in the environment.", C::TEST_BIND_BAD)))
         .stdout(predicate::str::contains(format!("Bind failure")))
         .failure();
 
@@ -309,12 +309,13 @@ fn bind_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
         // This is what we're really testing
         .arg(format!("--{}", C::BIND_KEY_CLI))
-        .arg(C::TEST_BIND);
+        .arg(C::TEST_BIND_BAD);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified from the command line.", C::TEST_BIND)))
+        .stdout(predicate::str::contains(format!("The HTTP server will bind to [{}], as specified from the command line.", C::TEST_BIND_BAD)))
         .stdout(predicate::str::contains(format!("Bind failure")))
         .failure();
 
     Ok(())
 }
+*/
