@@ -5,8 +5,6 @@ pub mod constants {
 
     pub const CARGO_BIN :&str = "bookwerx-core-rust";
 
-    pub const BIND_KEY_ENV :&str = "BCR_BIND";
-    pub const BIND_KEY_CLI :&str = "bind";
     pub const CONN_KEY_ENV :&str = "BCR_CONN";
     pub const CONN_KEY_CLI :&str = "conn";
     pub const DB_KEY_ENV :&str = "BCR_DB";
@@ -16,8 +14,6 @@ pub mod constants {
 
     pub const MYSQL_SEED_FILE :&str = "dbseed.sql";
     pub const INVALID_SEED_FILE :&str = "tests/invalid-seed.sql";
-    pub const TEST_BIND_BAD :&str = "lokalhost:catf00d";
-    pub const TEST_BIND_GOOD :&str = "localhost:6666";
     pub const TEST_CONN_STR :&str = "mysql://root:supersecretpassword@172.17.0.2:3306";
     pub const TEST_DB_NAME :&str = "bookwerx-core-rust-test";
 
@@ -28,5 +24,15 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> &'static str {
         "Hello, world!"
+    }
+
+    #[get("/accounts")]
+    pub fn get_accounts() -> &'static str {
+        "Get all accounts"
+    }
+
+    #[post("/accounts")]
+    pub fn post_account() -> &'static str {
+        "Post new account"
     }
 }

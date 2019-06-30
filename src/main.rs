@@ -16,7 +16,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matches = clap_app!(bookwerx_core_rust =>
-        (version: "0.1.2") // Keep this in sync with TOML
+        (version: "0.1.3") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind: -b --bind +takes_value "Which IP and port shall the http server bind to? For example 127.0.0.1:3003")
@@ -88,6 +88,7 @@ fn main() {
         }
     }
 
+
     // 5. If a seed_file is available then try to read it.
     // The seed file should not be very large and reading it should not be any trouble.
     let mut seed = String::new();
@@ -117,6 +118,7 @@ fn main() {
             }
         }
     }
+
 
     // 6. Now try to connect to the mysql server
     match mysql::Conn::new(&conn_string) {
@@ -166,28 +168,12 @@ fn main() {
 
     }
 
-    // 7. Obtain the http server binding, if available.
-    let bind_string;
-    match cli_matches.value_of(C::BIND_KEY_CLI) {
-        Some(_x) => {
-            println!("The HTTP server will bind to [{}], as specified from the command line.", _x);
-            bind_string = _x.to_string();
-        }
-        None =>
-            match env::var(C::BIND_KEY_ENV) {
-                Ok(_x) => {
-                    println!("The HTTP server will bind to [{}], as specified in the environment.", _x);
-                    bind_string = _x;
-                }
 
-                Err(_) => {
-                    println!("Fatal error: No http binding configuration available.");
-                    ::std::process::exit(1);
-                }
-            }
-    }
-
-    rocket::ignite().mount("/", routes![R::index]).launch();
+    rocket::ignite().mount("/", routes![
+        R::index,
+        R::get_accounts,
+        R::post_account
+    ]).launch();
 
 }
 
