@@ -16,7 +16,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matches = clap_app!(bookwerx_core_rust =>
-        (version: "0.1.3") // Keep this in sync with TOML
+        (version: "0.1.4") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind: -b --bind +takes_value "Which IP and port shall the http server bind to? For example 127.0.0.1:3003")
