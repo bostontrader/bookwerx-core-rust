@@ -36,7 +36,7 @@ fn establish_initial_conditions() {
 
 
 #[test] // 1.1
-fn conn_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
+fn conn_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
 
     establish_initial_conditions();
 
@@ -49,7 +49,7 @@ fn conn_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 1.2
-fn conn_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
+fn conn_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     cmd.env(C::CONN_KEY_ENV,C::TEST_CONN_STR);
@@ -63,7 +63,7 @@ fn conn_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 1.2
-fn conn_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
+fn conn_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     cmd.arg(format!("--{}", C::CONN_KEY_CLI))
@@ -79,7 +79,7 @@ fn conn_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
 #[test] // 1.3
 // The value set in the command line should override whatever is in the environment.
-fn conn_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
+fn conn_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     cmd.env(C::CONN_KEY_ENV,C::TEST_CONN_STR);
@@ -96,7 +96,7 @@ fn conn_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 2.1
-fn db_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
+fn db_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
@@ -111,7 +111,7 @@ fn db_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 2.2
-fn db_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
+fn db_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
 
     establish_initial_conditions();
 
@@ -133,7 +133,7 @@ fn db_no_cli_with_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 2.2
-fn db_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
+fn db_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
 
     establish_initial_conditions();
 
@@ -155,7 +155,7 @@ fn db_with_cli_no_env() -> Result<(), Box<std::error::Error>> {
 
 #[test] // 2.3
 // The value set in the command line should override whatever is in the environment.
-fn db_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
+fn db_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
 
     establish_initial_conditions();
 
@@ -178,7 +178,7 @@ fn db_with_cli_with_env() -> Result<(), Box<std::error::Error>> {
 }
 
 #[test] // 3.1
-fn init_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
+fn init_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
@@ -199,7 +199,7 @@ fn init_no_cli_no_env() -> Result<(), Box<std::error::Error>> {
 // 3.2
 
 #[test] // 3.2.1
-fn init_with_nonexistent_seed_file_via_cli() -> Result<(), Box<std::error::Error>> {
+fn init_with_nonexistent_seed_file_via_cli() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
@@ -219,7 +219,7 @@ fn init_with_nonexistent_seed_file_via_cli() -> Result<(), Box<std::error::Error
 }
 
 #[test] // 3.2.2
-fn init_with_invalid_seed_file_via_env() -> Result<(), Box<std::error::Error>> {
+fn init_with_invalid_seed_file_via_env() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin(C::CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
@@ -236,6 +236,7 @@ fn init_with_invalid_seed_file_via_env() -> Result<(), Box<std::error::Error>> {
 
     Ok(())
 }
+
 
 // Running this test would cause the server to successfully start.  It does so blockingly and will therefore not return to enable this test to function.  I don't know a better way to test this, so snip!
 /*#[test] // 3.2.3
