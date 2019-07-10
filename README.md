@@ -44,15 +44,13 @@ cargo run -- --help
 Note the syntax for *cargo run*.  This executes the server and feeds the command-line arg '--help' to it.
 
 
-### Configuration
+## Configuration
 
-**bookwerx-core-rust** does not do anything by default.  If you want it to do anything useful, you'll need to ensure that it gets the correct configuration options.  You can deliver said options via command line or the environment with the CLI having precedence.
+**bookwerx-core-rust** does not do anything by default.  If you want it to do anything useful, you'll need to ensure that it gets the correct configuration options.  You can deliver said options via configuration files, the command line, or the environment.
 
 Execute **bookwerx-core-rust** with the --help option to see the CLI choices.  Each option has a corresponding environment variable.
 
 **bookwerx-core-rust** Uses the following environment variables.  Each of these have a corresponding CLI option:
-
-BCR_BIND - Which IP and port shall the http server bind to? For example 127.0.0.1:3003
 
 BCR_CONN - A connection string to connect to the MySQL db.  For example: mysql://root:catfood@192.168.0.103:3306
 Notice that there is no trailing \ nor a database name.
@@ -62,4 +60,14 @@ BCR_DB - The name of the database to use.
 BCR_INIT - A file name for a file that contains SQL that will initialize the db.  If this is present the db will be wiped and reseeded.
 
 
+### Rocket
+
+**bookwerx-core-rust** uses Rocket as the http server.  [Rocket is configured separately.](https://rocket.rs/v0.4/guide/configuration/#configuration)
+
+
+### MariaDB
+
+**bookwerx-core-rust** uses MariaDB as for the db.  [This is also configured separately.](https://mariadb.org)
+
+Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that people might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your server to get the particular settings that you want.
 

@@ -42,3 +42,27 @@ fn post_account() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(response.status(), Status::Ok);
     Ok(())
 }
+
+#[test]
+fn get_currencies() -> Result<(), Box<dyn std::error::Error>> {
+
+    let rocket = rocket::ignite().mount("/", routes![R::get_currencies]);
+    let client = Client::new(rocket).expect("valid rocket instance");
+    let req = client.get("/currencies");
+    let response = req.dispatch();
+
+    assert_eq!(response.status(), Status::Ok);
+    Ok(())
+}
+
+#[test]
+fn post_currency() -> Result<(), Box<dyn std::error::Error>> {
+
+    let rocket = rocket::ignite().mount("/", routes![R::post_currency]);
+    let client = Client::new(rocket).expect("valid rocket instance");
+    let req = client.post("/currencies");
+    let response = req.dispatch();
+
+    assert_eq!(response.status(), Status::Ok);
+    Ok(())
+}

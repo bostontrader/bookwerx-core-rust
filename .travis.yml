@@ -1,7 +1,7 @@
 language: rust
 
 rust:
-  - nightly-2019-06-29
+  - nightly-2019-07-03
 
 env:
   - CODECOV_TOKEN="7743ab68-b2c4-485c-8954-24b8424e7922" RUST_BACKTRACE=1 RUST_TEST_THREADS=1
@@ -9,10 +9,12 @@ env:
 services:
   - docker
 
+
 before_install:
   - docker pull mariadb:10.4.5
   - docker run -d --name mariadb -e MYSQL_ROOT_PASSWORD=supersecretpassword mariadb:10.4.5
   - docker inspect mariadb
+
 
 addons:
   apt:
@@ -24,6 +26,13 @@ addons:
     - gcc
     - binutils-dev
     - libiberty-dev
+
+
+script:
+  - cargo build
+  - cargo test --test dbseed
+  - cargo test --test config
+
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&

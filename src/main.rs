@@ -1,184 +1,159 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 #[macro_use] extern crate rocket;
+//#[macro_use] extern crate rocket_contrib;
 
 use bookwerx_core_rust::constants as C;
+use bookwerx_core_rust::db as D;
 use bookwerx_core_rust::routes as R;
 
 use clap::clap_app;
 use std::env;
-use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
+use rocket::config::{Config, Environment};
 
 
 fn main() {
 
     // 1. Configure the CLI
-    let cli_matches = clap_app!(bookwerx_core_rust =>
-        (version: "0.1.4") // Keep this in sync with TOML
+    let cli_matcher = clap_app!(bookwerx_core_rust =>
+        (version: "0.2.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
-        (@arg bind: -b --bind +takes_value "Which IP and port shall the http server bind to? For example 127.0.0.1:3003")
+        (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bindto. Ex: 0.0.0.0")
+        (@arg bind_port: -p --bind_port +takes_value "Specifies a port for the http server to bind to.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
-        (@arg db: -d --db +takes_value "The database name to use.")
-        (@arg init: -i --init +takes_value "Initialize the db using the given seed file.")
+        (@arg dbname: -d --dbname +takes_value "The database name to use.")
+        (@arg mode: -m --mode +takes_value "Operating mode. Ex: test, development, or production")
     ).get_matches();
 
+    // 2. Obtain the configuration arguments passed via command line or environment, if any.
 
-    // 2. Obtain a connection string, if available.
-    let conn_string;
-    match cli_matches.value_of(C::CONN_KEY_CLI) {
-        Some(_x) => {
-            println!("Accessing the db via connection string [{}], as set from the command line.", _x);
-            conn_string = _x.to_string();
+    // 2.1 bind_ip value.  Must have.
+    let bind_ip_value;
+    match cli_matcher.value_of(C::BIND_IP_KEY_CLI) {
+        Some(_result) => {
+            println!("Rocket will bind to IP address [{}], as set from the command line.", _result);
+            bind_ip_value = _result.to_string();
+        }
+        None =>
+            match env::var(C::BIND_IP_KEY_ENV) {
+                Ok(_x) => {
+                    println!("Rocket will bind to IP address [{}], as set from the environment.", _x);
+                    bind_ip_value = _x;
+                }
+
+                Err(_) => {
+                    println!("Fatal error: No binding IP address is available.");
+                    ::std::process::exit(1);
+                }
+            }
+    }
+
+    // 2.2 bind_port value.  Must have.
+    let bind_port_value;
+    match cli_matcher.value_of(C::BIND_PORT_KEY_CLI) {
+        Some(_result) => {
+            println!("Rocket will bind to port [{}], as set from the command line.", _result);
+            bind_port_value = _result.to_string();
+        }
+        None =>
+            match env::var(C::BIND_PORT_KEY_ENV) {
+                Ok(_x) => {
+                    println!("Rocket will bind to port [{}], as set from the environment.", _x);
+                    bind_port_value = _x;
+                }
+
+                Err(_) => {
+                    println!("Fatal error: No binding port is available.");
+                    ::std::process::exit(1);
+                }
+            }
+    }
+    
+    
+    // 2.3 conn_value.  Must have.
+    let conn_value;
+    match cli_matcher.value_of(C::CONN_KEY_CLI) {
+        Some(_result) => {
+            println!("Accessing the db via connection string [{}], as set from the command line.", _result);
+            conn_value = _result.to_string();
         }
         None =>
             match env::var(C::CONN_KEY_ENV) {
-                Ok(_x) => {
-                    println!("Accessing the db via connection string [{}], as set from the environment.", _x);
-                    conn_string = _x;
+                Ok(_result) => {
+                    println!("Accessing the db via connection string [{}], as set from the environment.", _result);
+                    conn_value = _result;
                 }
 
                 Err(_) => {
-                    println!("Fatal error: No db connection string available.");
+                    println!("Fatal error: No db connection string is available.");
                     ::std::process::exit(1);
                 }
             }
     }
 
-    // 3. Obtain a db name, if available.
-    let db_name;
-    match cli_matches.value_of(C::DB_KEY_CLI) {
-        Some(_x) => {
-            println!("Using database [{}], as set from the command line.", _x);
-            db_name = _x.to_string();
+    // 2.4 dbname_value.  Must have.
+    let dbname_value;
+    match cli_matcher.value_of(C::DBNAME_KEY_CLI) {
+        Some(_result) => {
+            println!("Using db [{}], as set from the command line.", _result);
+            dbname_value = _result.to_string();
         }
         None =>
-            match env::var(C::DB_KEY_ENV) {
-                Ok(_x) => {
-                    println!("Using database [{}], as set from the environment.", _x);
-                    db_name = _x;
+            match env::var(C::DBNAME_KEY_ENV) {
+                Ok(_result) => {
+                    println!("Using db [{}], as set from the environment.", _result);
+                    dbname_value = _result;
                 }
 
                 Err(_) => {
-                    println!("Fatal error: No database specified.");
+                    println!("Fatal error: No db name is available.");
                     ::std::process::exit(1);
                 }
             }
     }
 
-    // 4. Obtain a seed_file name for the db, if available.
-    let mut seed_file = String::new();
-    match cli_matches.value_of(C::INIT_KEY_CLI) {
-        Some(_x) => {
-            println!("Initializing the db with seed file [{}], as set from the command line.", _x);
-            seed_file = _x.to_string();
+    // 2.5 mode_value.  Must have.
+    let mode_value;
+    match cli_matcher.value_of(C::MODE_KEY_CLI) {
+        Some(_result) => {
+            println!("Operating in {} mode, as set from the command line.", _result);
+            mode_value = _result.to_string();
         }
         None =>
-            match env::var(C::INIT_KEY_ENV) {
-                Ok(_x) => {
-                    println!("Initializing the db with seed file [{}], as set from the environment.", _x);
-                    seed_file = _x;
+            match env::var(C::MODE_KEY_ENV) {
+                Ok(_result) => {
+                    println!("Operating in {} mode, as set from the environment.", _result);
+                    mode_value = _result;
                 }
 
                 Err(_) => {
-                  // Neither the command line nor the env says anything about initialization.  Therefore don't do any initialization.
+                    println!("Fatal error: No operating mode is available.");
+                    ::std::process::exit(1);
                 }
-        }
+            }
     }
 
 
-    // 5. If a seed_file is available then try to read it.
-    // The seed file should not be very large and reading it should not be any trouble.
-    let mut seed = String::new();
-    if !seed_file.is_empty() {
-        // Create a path to the desired file
-        let path = Path::new(&seed_file);
-        let display = path.display();
+    // 3. Now crank-up rocket!
+    let mut full_conn = conn_value.to_string();
+    full_conn.push('/');
+    full_conn.push_str(&dbname_value.to_string());
 
-        // Open the path in read-only mode.
-        let mut file = match File::open(&path) {
-            Ok(file) => file,
+    let mut hm_inner = std::collections::HashMap::new();
+    hm_inner.insert("url".to_string(), full_conn);
 
-            Err(why) => {
-                println!("Couldn't open [{}]: {}", display, why.description());
-                ::std::process::exit(1);
-            },
-        };
+    let mut hm_outer = std::collections::HashMap::new();
+    hm_outer.insert("mysqldb".to_string(), hm_inner);
 
-        // Read the file contents into a string, returns `io::Result<usize>`
-        match file.read_to_string(&mut seed) {
-            Ok(_) => {
-                println!("{} contains:{}", display, seed)
-            }
-            Err(why) => {
-                println!("couldn't read {}: {}", display, why.description());
-                ::std::process::exit(1);
-            }
-        }
-    }
+    let config = Config::build(Environment::Staging)
+        .address(bind_ip_value)
+        .extra("databases",hm_outer)
+        .port(bind_port_value.parse::<u16>().unwrap())
+        .finalize().unwrap();
 
 
-    // 6. Now try to connect to the mysql server
-    match mysql::Conn::new(&conn_string) {
-        Ok(mut _conn) => {
-            println!("Connected to [{}]", conn_string);
-
-            // If there is a seed, wipe the db and re-init.
-            if !seed.is_empty() {
-                match _conn.query(format!("DROP DATABASE IF EXISTS `{0}`; CREATE DATABASE `{0}`;", db_name)) {
-                    Ok(_) => {
-                        println!("drop and create success");
-                    }
-                    Err(_) => {
-                        println!("drop and create fail");
-                        ::std::process::exit(1);
-                    }
-                };
-
-                _conn.select_db(&db_name[..]);
-
-                match _conn.query(&seed) {
-                    Ok(_) => {
-                        println!("The seed has germinated.")
-                    }
-                    Err(_x) => {
-                        println!("The seed file does not contain valid SQL.  Does not compute.");
-                        ::std::process::exit(1);
-                    }
-                };
-            }
-
-            // At this point the db should be there, newly created if need be.
-            if _conn.select_db(&db_name[..]) {
-                println!("USE database [{}] success.", &db_name);
-            } else {
-                println!("Fatal error: Unknown database [{}].", &db_name);
-                ::std::process::exit(1);
-            }
-
-
-        }
-        Err(_err) => {
-            println!("{}", _err);
-            ::std::process::exit(1);
-        }
-
-
-    }
-
-
-    rocket::ignite().mount("/", routes![
-        R::index,
-        R::get_accounts,
-        R::post_account
-    ]).launch();
-
-}
-
-
-#[test]
-fn test() {
-
+    rocket::custom(config)
+        .attach(D::MyRocketSQLConn::fairing())
+        //.mount(..)
+        .launch();
 }
