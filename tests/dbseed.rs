@@ -252,7 +252,7 @@ fn seed_with_invalid_seed_file_via_env() -> Result<(), Box<dyn std::error::Error
 
 
 #[test] // 3.2.3
-fn seed_with_valid_seed_file_cli_override_env() -> Result<(), Box<std::error::Error>> {
+fn seed_with_valid_seed_file_cli_override_env() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 

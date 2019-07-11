@@ -47,7 +47,7 @@ Test that we can provide the correct configuration via a mixture of command-line
 
 */
 
-const CARGO_BIN: &str = "bookwerx-core-rust";
+const CARGO_BIN: &str = "server";
 const TEST_BIND_IP: &str = "0.0.0.0";
 const TEST_BIND_PORT: &str = "8888";
 const TEST_CONN_STR: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
