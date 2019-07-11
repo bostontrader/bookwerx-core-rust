@@ -15,10 +15,10 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.2.0") // Keep this in sync with TOML
+        (version: "0.2.1") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
-        (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bindto. Ex: 0.0.0.0")
+        (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
         (@arg bind_port: -p --bind_port +takes_value "Specifies a port for the http server to bind to.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
         (@arg dbname: -d --dbname +takes_value "The database name to use.")
@@ -154,6 +154,9 @@ fn main() {
 
     rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
-        //.mount(..)
-        .launch();
+        .mount("/", routes![
+            R::index,
+            R::get_currencies,
+            R::post_currency,
+        ]).launch();
 }

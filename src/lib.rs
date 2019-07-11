@@ -35,7 +35,7 @@ pub mod routes {
 
     #[get("/")]
     pub fn index() -> &'static str {
-        "Hello, world!"
+        "Welcome to bookwerx-core-rust"
     }
 
     #[get("/accounts")]
@@ -49,8 +49,12 @@ pub mod routes {
     }
 
     #[get("/currencies")]
-    pub fn get_currencies() -> &'static str {
-        "Get all currencies"
+    pub fn get_currencies(mut conn: crate::db::MyRocketSQLConn) -> &'static str {
+        for row in conn.prep_exec("SELECT * from currencies", ()).unwrap() {
+            println!("{:?}",row);
+        }
+
+        "success"
     }
 
     #[derive(FromForm)]
@@ -58,5 +62,21 @@ pub mod routes {
         symbol: String,
         title: String,
     }
+
+    #[post("/currencies", data="<currency>")]
+    pub fn post_currency(currency: rocket::request::Form<Currency>, mut conn: crate::db::MyRocketSQLConn) -> &'static str {
+
+        let n = conn.prep_exec("INSERT INTO currencies (symbol, title) VALUES (:symbol, :title)",(&currency.symbol, &currency.title));
+        match n {
+            Ok(_result) => {
+                return "success"
+            }
+            Err(_err) => {
+                return "error"
+            }
+        }
+
+    }
+
 
 }

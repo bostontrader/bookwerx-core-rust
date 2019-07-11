@@ -29,7 +29,6 @@ such as accounts, currencies, and transactions.
 
 * You will need mysql.
 
-
 The care and feeding of these items are beyond the scope of these instructions.
 
 ### But assuming they are correctly installed...
@@ -38,36 +37,55 @@ The care and feeding of these items are beyond the scope of these instructions.
 git clone https://github.com/bostontrader/bookwerx-core-rust.git
 cd bookwerx-core-rust
 cargo build
-cargo run -- --help
+cargo run --bin dbseed -- --help
+cargo run --bin bookwerx-core-rust -- --help
+```
+Note the syntax for the *cargo run* commands.  This executes the command and feeds the command-line arg '--help' to it.  Whereupon you can further dissect the operation.
+
+**dbseed** will brain-wipe your db and reseed to a minimal usable condition.  For example:
+```bash
+cargo run --bin dbseed -- --conn mysql://root:supersecretpassword@172.17.0.2:3306 --dbname somedbname --seed dbseed.sql
 ```
 
-Note the syntax for *cargo run*.  This executes the server and feeds the command-line arg '--help' to it.
+**server** is the actual server that you're lookin' to use.  The server needs to connect to a db that has been properly seeded, hence the prior step.  As an example for execution of the server:
+```bash
+cargo run --bin server -- \
+    --bind_ip 0.0.0.0 --bind_port 8000 \
+    --conn mysql://root:supersecretpassword@172.17.0.2:3306 --dbname somedbname --seed dbseed.sql \
+    --mode test
+```
 
 
 ## Configuration
 
-**bookwerx-core-rust** does not do anything by default.  If you want it to do anything useful, you'll need to ensure that it gets the correct configuration options.  You can deliver said options via configuration files, the command line, or the environment.
+The binaries of **bookwerx-core-rust** do not do anything by default.  If you want it to do anything useful, you'll need to ensure that they get the correct configuration options.  You can deliver said options via the command line or the environment.
 
-Execute **bookwerx-core-rust** with the --help option to see the CLI choices.  Each option has a corresponding environment variable.
+As described above, execute **server** or **dbseed** with the --help option to see the CLI choices.  Each option has a corresponding environment variable.
 
-**bookwerx-core-rust** Uses the following environment variables.  Each of these have a corresponding CLI option:
+**dbseed** Uses the following environment variables.  Each of these have a corresponding CLI option:
 
-BCR_CONN - A connection string to connect to the MySQL db.  For example: mysql://root:catfood@192.168.0.103:3306
+BCR_CONN - A connection string to connect to the MySQL db.  For example: mysql://root:supersecretpassword@172.17.0.2:3306
 Notice that there is no trailing \ nor a database name.
 
-BCR_DB - The name of the database to use.
+BCR_DBNAME - The name of the database to use.
 
-BCR_INIT - A file name for a file that contains SQL that will initialize the db.  If this is present the db will be wiped and reseeded.
+BCR_SEED - A file name for a file that contains SQL that will initialize the db.  If this is present the db will be brain-wiped and reseeded.
+
+**server** Uses all of the above, except for BCR_SEED.  In addition, it also uses:
+
+BCR_BIND_IP - An IP address for the http server to bind to.
+
+BCR_BIND_PORT - A port for the http server to bind to.
+
+BCR_MODE - Run the server in whatever mode.
 
 
 ### Rocket
 
-**bookwerx-core-rust** uses Rocket as the http server.  [Rocket is configured separately.](https://rocket.rs/v0.4/guide/configuration/#configuration)
-
+**bookwerx-core-rust** uses Rocket as the http server, but it programmatically configures Rocket, so no other Rocket configuration is needed.
 
 ### MariaDB
 
-**bookwerx-core-rust** uses MariaDB as for the db.  [This is also configured separately.](https://mariadb.org)
+**bookwerx-core-rust** uses MySQL for the db.  [This is configured separately.](https://dev.mysql.com)
 
-Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that people might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your server to get the particular settings that you want.
-
+Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that people might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your MySQL server to get the particular settings that you want.

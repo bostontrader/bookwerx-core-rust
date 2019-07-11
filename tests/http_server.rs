@@ -7,6 +7,7 @@ use bookwerx_core_rust::routes as R;
 use rocket::local::Client;
 use rocket::http::Status;
 
+
 #[test]
 fn get_index() -> Result<(), Box<dyn std::error::Error>> {
 
@@ -19,7 +20,8 @@ fn get_index() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
+
+/*#[test]
 fn get_accounts() -> Result<(), Box<dyn std::error::Error>> {
 
     let rocket = rocket::ignite().mount("/", routes![R::get_accounts]);
@@ -53,7 +55,7 @@ fn get_currencies() -> Result<(), Box<dyn std::error::Error>> {
 
     assert_eq!(response.status(), Status::Ok);
     Ok(())
-}
+} */
 
 #[test]
 fn post_currency() -> Result<(), Box<dyn std::error::Error>> {
