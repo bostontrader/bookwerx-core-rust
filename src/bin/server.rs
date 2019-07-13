@@ -135,6 +135,8 @@ fn main() {
 
 
     // 3. Now crank-up rocket!
+
+    // 3.1 First build a configuration hash-map for Rocket
     let mut full_conn = conn_value.to_string();
     full_conn.push('/');
     full_conn.push_str(&dbname_value.to_string());
@@ -145,13 +147,14 @@ fn main() {
     let mut hm_outer = std::collections::HashMap::new();
     hm_outer.insert("mysqldb".to_string(), hm_inner);
 
+    // 3.2 Then build the Rocket configuration object
     let config = Config::build(Environment::Staging)
         .address(bind_ip_value)
         .extra("databases",hm_outer)
         .port(bind_port_value.parse::<u16>().unwrap())
         .finalize().unwrap();
 
-
+    // 3.3 Finally, launch it
     rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
         .mount("/", routes![

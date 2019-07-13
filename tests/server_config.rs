@@ -6,10 +6,9 @@ use std::process::Command;
 /*
 These tests should be run one at a time so be sure to set RUST_TEST_THREADS=1 when executing the tests.  For example:
 
-RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test config
+RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test server_config
 
 Test that we can provide the correct configuration via a mixture of command-line and the environment.  Other configuration is frequently needed in order to enable the server to proceed to the behavior under test.
-
 
 1.1 If neither --bind_ip nor BCR_BIND_IP are specified, the server will complain and exit.  We _must have_ an IP address for the Rocket server to use or there's nothing else to do.
 
@@ -44,7 +43,6 @@ Test that we can provide the correct configuration via a mixture of command-line
 5.2 If either one of --mode or BCR_MODE are specified, the startup message will mention it.  But the server will terminate with an error because other subsequent configuration is missing.
 
 5.3 If both --mode and BCR_MODE are specified, the startup message mentions the value from --mode.  But the server will terminate with an error because other subsequent configuration is missing.
-
 */
 
 const CARGO_BIN: &str = "server";
@@ -386,22 +384,16 @@ fn mode_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
 
 //#[test] // 5.2 This test should enable the server to start up.  But it starts blockingly, so it never returns to this test. How can we test this?
 /*fn mode_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
-
     // This is necessary to make the test proceed far enough to test what we want.
     cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
         .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
         .env(C::CONN_KEY_ENV,TEST_CONN_STR)
         .env(C::DBNAME_KEY_ENV,TEST_DBNAME)
-
         // This is what we're really testing
         .env(C::MODE_KEY_ENV,TEST_MODE);
-
     cmd.assert()
         .stdout(predicate::str::contains(format!("Operating in {} mode, as set from the environment.", TEST_MODE)))
         .failure();
-
     Ok(())
 }*/
-
