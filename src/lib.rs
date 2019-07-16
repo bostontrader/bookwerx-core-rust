@@ -22,6 +22,12 @@ pub mod constants {
 
     pub const SEED_KEY_ENV: &str = "BCR_SEED";
     pub const SEED_KEY_CLI: &str = "seed";
+
+    // We also have some constants solely for testing.
+    pub const TEST_BIND_IP: &str = "0.0.0.0";
+    pub const TEST_BIND_PORT: u16 = 8000;
+    pub const TEST_CONN: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
+    pub const TEST_DBNAME: &str = "bookwerx-core-rust-test";
 }
 
 pub mod db {
@@ -34,7 +40,52 @@ pub mod db {
 
 pub mod routes {
 
-    use rocket_contrib::json::Json;
+    use rocket::http::{ContentType, Status};
+    use rocket_contrib::json::{Json, JsonValue};
+    use rocket::request::Request;
+    use rocket::response;
+    use rocket::response::{Responder, Response};
+
+    #[derive(Debug)]
+    pub struct ApiResponse {
+        json: JsonValue,
+        status: Status,
+    }
+
+    #[derive(Serialize)]
+    pub struct Account {
+        id: u32,
+        currency_id: u32,
+        title: String,
+    }
+
+    #[derive(FromForm)]
+    pub struct AccountShort {
+        currency_id: u32,
+        title: String,
+    }
+
+    #[derive(Serialize)]
+    pub struct Currency {
+        id: u32,
+        symbol: String,
+        title: String,
+    }
+
+    #[derive(FromForm)]
+    pub struct CurrencyShort {
+        symbol: String,
+        title: String,
+    }
+
+    impl<'r> Responder<'r> for ApiResponse {
+        fn respond_to(self, req: &Request) -> response::Result<'r> {
+            Response::build_from(self.json.respond_to(&req).unwrap())
+                .status(self.status)
+                .header(ContentType::JSON)
+                .ok()
+        }
+    }
 
     #[get("/")]
     pub fn index() -> &'static str {
@@ -42,13 +93,46 @@ pub mod routes {
     }
 
     #[get("/accounts")]
-    pub fn get_accounts() -> &'static str {
-        "Get all accounts"
+    pub fn get_accounts(mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Account>> {
+
+        let vec: Vec<Account> =
+            conn.prep_exec("SELECT id, currency_id, title from accounts", ())
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
+                        Account {
+                            id: id,
+                            currency_id: currency_id,
+                            title: title,
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
+                }).unwrap(); // Unwrap `Vec<Payment>`
+
+        Json(vec)
     }
 
-    #[post("/accounts")]
-    pub fn post_account() -> &'static str {
-        "Post new account"
+
+    #[post("/accounts", data="<account>")]
+    pub fn post_account(account: rocket::request::Form<AccountShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("INSERT INTO accounts (currency_id, title) VALUES (:currency_id, :title)",(&account.currency_id, &account.title));
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"last_insert_id": _result.last_insert_id()}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::BadRequest,
+                }
+            }
+        }
+
     }
 
     #[get("/currencies")]
@@ -74,32 +158,24 @@ pub mod routes {
         Json(vec)
     }
 
-    #[derive(Serialize)]
-    pub struct Currency {
-        id: u32,
-        symbol: String,
-        title: String,
-    }
-
-    #[derive(FromForm)]
-    pub struct CurrencyShort {
-        symbol: String,
-        title: String,
-    }
 
     #[post("/currencies", data="<currency>")]
-    pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> &'static str {
+    pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO currencies (symbol, title) VALUES (:symbol, :title)",(&currency.symbol, &currency.title));
+
         match n {
-            Ok(_result) => {
-                return "success"
-            }
+            Ok(_result) => ApiResponse {
+                json: json!({"last_insert_id": _result.last_insert_id()}),
+                status: Status::Ok,
+            },
             Err(_err) => {
-                return "error"
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::BadRequest,
+                }
             }
         }
-
     }
 
 

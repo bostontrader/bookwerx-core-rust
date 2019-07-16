@@ -15,7 +15,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.2.1") // Keep this in sync with TOML
+        (version: "0.2.2") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -159,6 +159,8 @@ fn main() {
         .attach(D::MyRocketSQLConn::fairing())
         .mount("/", routes![
             R::index,
+            R::get_accounts,
+            R::post_account,
             R::get_currencies,
             R::post_currency,
         ]).launch();
