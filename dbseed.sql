@@ -1,4 +1,10 @@
-DROP TABLE IF EXISTS currencies;
+CREATE TABLE apikeys (
+  id int(11) unsigned NOT NULL AUTO_INCREMENT,
+  apikey varchar(45) NOT NULL,
+  UNIQUE KEY (apikey),
+  PRIMARY KEY (id)
+);
+
 CREATE TABLE currencies (
   id int(11) unsigned NOT NULL AUTO_INCREMENT,
   symbol varchar(45) NOT NULL,
@@ -7,7 +13,6 @@ CREATE TABLE currencies (
   PRIMARY KEY (id)
 );
 
-DROP TABLE IF EXISTS accounts;
 CREATE TABLE accounts (
   id int(11) unsigned NOT NULL AUTO_INCREMENT,
   currency_id int(11) unsigned NOT NULL,

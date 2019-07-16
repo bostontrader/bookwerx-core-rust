@@ -17,9 +17,13 @@ use std::collections::HashMap;
 
 #[test]
 fn test() -> Result<(), Box<dyn std::error::Error>> {
+
     let client = startup();
 
-    // Test in this order in order to accommodate referential integrity
+    // 1. Everybody needs an API key.  Get that first.
+    let apikey: String = apikey(&client);
+
+    // 2. Test in this order in order to accommodate referential integrity
     currencies(&client);
     accounts(&client);
     Ok(())
@@ -53,6 +57,7 @@ fn startup() -> Client {
             //R::index,
             R::get_accounts,
             R::post_account,
+            R::post_apikey,
             R::get_currencies,
             R::post_currency
         ]);
@@ -133,6 +138,16 @@ fn accounts(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 
+}
+
+// Get an API key
+fn apikey(client: &Client) -> String {
+
+    let mut response = client.post("/apikeys").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    let ak: R::Apikey = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    ak.apikey
 }
 
 // Examine currencies

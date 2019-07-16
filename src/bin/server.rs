@@ -161,6 +161,7 @@ fn main() {
             R::index,
             R::get_accounts,
             R::post_account,
+            R::post_apikey,
             R::get_currencies,
             R::post_currency,
         ]).launch();

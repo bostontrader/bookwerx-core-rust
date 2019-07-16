@@ -65,6 +65,9 @@ pub mod routes {
         title: String,
     }
 
+    #[derive(Deserialize)]
+    pub struct Apikey { pub apikey: String }
+
     #[derive(Serialize)]
     pub struct Currency {
         id: u32,
@@ -133,6 +136,33 @@ pub mod routes {
             }
         }
 
+    }
+
+    #[post("/apikeys")]
+    pub fn post_apikey(mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        use rand::{thread_rng, Rng};
+        use rand::distributions::Alphanumeric;
+
+        let rand_string: String = thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(10)
+            .collect();
+
+        let n = conn.prep_exec(format!("INSERT INTO apikeys (apikey) VALUES ('{}')",rand_string),());
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"apikey": rand_string}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::BadRequest,
+                }
+            }
+        }
     }
 
     #[get("/currencies")]
