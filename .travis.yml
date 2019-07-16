@@ -21,3 +21,5 @@ script:
   - cargo test --test server_config
   - cargo test --test dbseed
   - cargo test --test currencies
+  - cargo test --test kahuna-grande
+
