@@ -55,14 +55,16 @@ pub mod routes {
     #[derive(Serialize)]
     pub struct Account {
         id: u32,
+        apikey: String,
         currency_id: u32,
-        title: String,
+        title: String
     }
 
     #[derive(FromForm)]
     pub struct AccountShort {
+        apikey: String,
         currency_id: u32,
-        title: String,
+        title: String
     }
 
     #[derive(Deserialize)]
@@ -71,12 +73,14 @@ pub mod routes {
     #[derive(Serialize)]
     pub struct Currency {
         id: u32,
+        apikey: String,
         symbol: String,
-        title: String,
+        title: String
     }
 
     #[derive(FromForm)]
     pub struct CurrencyShort {
+        apikey: String,
         symbol: String,
         title: String,
     }
@@ -99,18 +103,19 @@ pub mod routes {
     pub fn get_accounts(mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Account>> {
 
         let vec: Vec<Account> =
-            conn.prep_exec("SELECT id, currency_id, title from accounts", ())
+            conn.prep_exec("SELECT id, apikey, currency_id, title from accounts", ())
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, apikey, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
                         Account {
                             id: id,
+                            apikey: apikey,
                             currency_id: currency_id,
-                            title: title,
+                            title: title
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
                 }).unwrap(); // Unwrap `Vec<Payment>`
@@ -122,7 +127,7 @@ pub mod routes {
     #[post("/accounts", data="<account>")]
     pub fn post_account(account: rocket::request::Form<AccountShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO accounts (currency_id, title) VALUES (:currency_id, :title)",(&account.currency_id, &account.title));
+        let n = conn.prep_exec("INSERT INTO accounts (apikey, currency_id, title) VALUES (:apikey, :currency_id, :title)",(&account.apikey, &account.currency_id, &account.title));
         match n {
             Ok(_result) => ApiResponse {
                 json: json!({"last_insert_id": _result.last_insert_id()}),
@@ -169,18 +174,19 @@ pub mod routes {
     pub fn get_currencies(mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Currency>> {
 
         let vec: Vec<Currency> =
-            conn.prep_exec("SELECT id, symbol, title from currencies", ())
+            conn.prep_exec("SELECT id, apikey, symbol, title from currencies", ())
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                 // will map each `MyResult` to contained `row` (no proper error handling)
                 // and second call to `map` will map each `row` to `Payment`
                 result.map(|x| x.unwrap()).map(|row| {
                     // ⚠️ Note that from_row will panic if you don't follow the schema
-                    let (id, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                    let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
                     Currency {
                         id: id,
+                        apikey: apikey,
                         symbol: symbol,
-                        title: title,
+                        title: title
                     }
                 }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
             }).unwrap(); // Unwrap `Vec<Payment>`
@@ -192,7 +198,7 @@ pub mod routes {
     #[post("/currencies", data="<currency>")]
     pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO currencies (symbol, title) VALUES (:symbol, :title)",(&currency.symbol, &currency.title));
+        let n = conn.prep_exec("INSERT INTO currencies (apikey, symbol, title) VALUES (:apikey, :symbol, :title)",(&currency.apikey, &currency.symbol, &currency.title));
 
         match n {
             Ok(_result) => ApiResponse {

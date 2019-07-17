@@ -15,6 +15,8 @@ use rocket::local::Client;
 
 use std::collections::HashMap;
 
+const TOOLONG: &str = "... what can this strange device be... when I touch it, it gives forth a sound.";
+
 #[test]
 fn test() -> Result<(), Box<dyn std::error::Error>> {
 
@@ -24,8 +26,8 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     let apikey: String = apikey(&client);
 
     // 2. Test in this order in order to accommodate referential integrity
-    currencies(&client);
-    accounts(&client);
+    currencies(&client, &apikey);
+    accounts(&client, &apikey);
     Ok(())
 }
 
@@ -68,7 +70,7 @@ fn startup() -> Client {
 }
 
 // Examine accounts
-fn accounts(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. GET /accounts, empty array
     let mut response = client.get("/accounts").dispatch();
@@ -80,37 +82,51 @@ fn accounts(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. Try to post a new account, but trigger many errors first.
 
-    // 2.1 Post with a missing required field
+    // 2.1 Post with a missing required field (title)
     response = client.post("/accounts")
-        .body("currency_id=666")
+        .body("apikey=key&currency_id=666")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
     // 2.2 Post with an extraneous field.  422.
     response = client.post("/accounts")
-        .body("currency_id=666&title=cash in mattress&extraneous=true") // 422 unprocessable entity
+        .body("apikey=key&currency_id=666&title=cash in mattress&extraneous=true") // 422 unprocessable entity
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
-    // 2.3 Post using a title that's too long.  400.
+    // 2.3.1 Post using a title that's too long.  400.
     response = client.post("/accounts")
-        .body("currency_id=666&title=what can this strange device be, when I touch it, it gives forth a sound.")
+        .body(format!("apikey=key&currency_id=666&title={}", TOOLONG))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
-    // 2.4 Post using a non-numeric currency_id.  422.
+    // 2.3.2 Post using an apikey that's too long.  400.
     response = client.post("/accounts")
-        .body("currency_id=catfood&title=yum")
+        .body(format!("apikey={}&currency_id=666&title=catfood", TOOLONG))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.4.1 Post using a non-numeric currency_id.  422.
+    response = client.post("/accounts")
+        .body("apikey=key&currency_id=catfood&title=yum")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
-    // 2.5 Successful post. 200.
+    // 2.4.2 Post using a non-existant apikey. 400
     response = client.post("/accounts")
-        .body("currency_id=1&title=cash in mattress")
+        .body("apikey=notarealkey&currency_id=1&title=cash in mattress")
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.5 Successful post. 200. WTF with the currency_id??
+    response = client.post("/accounts")
+        .body(format!("apikey={}&currency_id=2&title=cash in mattress", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -122,9 +138,9 @@ fn accounts(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
     assert_eq!(v.as_array().unwrap().len(), 1);
 
-    // 4. Make the 2nd Successful post. 200. (why does currency_id skip from 1 to 3?
+    // 4. Make the 2nd Successful post. 200. (why does currency_id skip from 2 to 4?
     response = client.post("/accounts")
-        .body("currency_id=3&title=bank of mises")
+        .body(format!("apikey={}&currency_id=4&title=bank of mises", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -151,7 +167,7 @@ fn apikey(client: &Client) -> String {
 }
 
 // Examine currencies
-fn currencies(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. GET /currencies, empty array
     let mut response = client.get("/currencies").dispatch();
@@ -163,37 +179,53 @@ fn currencies(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. Try to post a new currency, but trigger many errors first.
 
-    // 2.1 Post with a missing required field
+    // 2.1 Post with a missing required field (title)
     response = client.post("/currencies")
-        .body("symbol=value&otherField=123")
+        .body("apikey=key&symbol=value&otherField=123")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
     // 2.2 Post with an extraneous field.  422.
     response = client.post("/currencies")
-        .body("symbol=QTL&title=Quatloo&extraneous_field=true") // 422 unprocessable entity
+        .body("apikey=key&symbol=QTL&title=Quatloo&extraneous_field=true") // 422 unprocessable entity
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
-    // 2.3 Post using a title that's too long.  400.
+    // 2.3 Fields that are too long.
+
+    // 2.3.1 Post using an apikey that's too long.  400.
     response = client.post("/currencies")
-        .body("symbol=QTL&title=what can this strange device be, when I touch it, it gives forth a sound.")
+        .body(format!("apikey={}&symbol=QTL&title", TOOLONG))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
-    // 2.4 Post using a symbol that's too long.  400.
+    // 2.3.2 Post using a symbol that's too long.  400.
     response = client.post("/currencies")
-        .body("title=Quatloo&symbol=what can this strange device be, when I touch it, it gives forth a sound.")
+        .body(format!("apikey=key&title=Quatloo&symbol={}", TOOLONG))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.3.3 Post using a title that's too long.  400.
+    response = client.post("/currencies")
+        .body(format!("apikey=key&symbol=QTL&title={}", TOOLONG))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.4 Post using a non-existant apikey. 400
+    response = client.post("/currencies")
+        .body("apikey=notarealkey&symbol=QTL&title=Quatloo")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
     // 2.5 Successful post. 200.
     response = client.post("/currencies")
-        .body("title=Quatloo&symbol=QTL")
+        .body(format!("apikey={}&symbol=QTL&title=Quatloo", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -207,14 +239,16 @@ fn currencies(client: &Client) -> Result<(), Box<dyn std::error::Error>> {
 
     // 3.1 Duplicate post. 400.
     response = client.post("/currencies")
-        .body("title=Quatloo&symbol=QTL")
+        .body(format!("apikey={}&symbol=QTL&title=Quatloo", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
     // 4. 2nd Successful post. 200.
     response = client.post("/currencies")
-        .body("title=Gold, g&symbol=XAU")
+        .body("apikey=key&title=Gold, g&symbol=XAU")
+        .body(format!("apikey={}&symbol=XAU&title=Quatloo", apikey))
+
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
