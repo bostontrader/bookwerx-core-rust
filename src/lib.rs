@@ -85,6 +85,19 @@ pub mod routes {
         title: String,
     }
 
+    #[derive(Serialize)]
+    pub struct Transaction {
+        id: u32,
+        apikey: String,
+        notes: String
+    }
+
+    #[derive(FromForm)]
+    pub struct TransactionShort {
+        apikey: String,
+        notes: String
+    }
+
     impl<'r> Responder<'r> for ApiResponse {
         fn respond_to(self, req: &Request) -> response::Result<'r> {
             Response::build_from(self.json.respond_to(&req).unwrap())
@@ -214,5 +227,47 @@ pub mod routes {
         }
     }
 
+    #[get("/transactions")]
+    pub fn get_transactions(mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Transaction>> {
+
+        let vec: Vec<Transaction> =
+            conn.prep_exec("SELECT id, apikey, notes from transactions", ())
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, apikey, notes) = rocket_contrib::databases::mysql::from_row(row);
+                        Transaction {
+                            id: id,
+                            apikey: apikey,
+                            notes: notes
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
+                }).unwrap(); // Unwrap `Vec<Payment>`
+
+        Json(vec)
+    }
+
+
+    #[post("/transactions", data="<transaction>")]
+    pub fn post_transaction(transaction: rocket::request::Form<TransactionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("INSERT INTO transactions (apikey, notes) VALUES (:apikey, :notes)",(&transaction.apikey, &transaction.notes));
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"last_insert_id": _result.last_insert_id()}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::BadRequest,
+                }
+            }
+        }
+
+    }
 
 }

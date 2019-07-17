@@ -28,6 +28,8 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     // 2. Test in this order in order to accommodate referential integrity
     currencies(&client, &apikey);
     accounts(&client, &apikey);
+    transactions(&client, &apikey);
+
     Ok(())
 }
 
@@ -61,7 +63,9 @@ fn startup() -> Client {
             R::post_account,
             R::post_apikey,
             R::get_currencies,
-            R::post_currency
+            R::post_currency,
+            R::get_transactions,
+            R::post_transaction
         ]);
 
     // 5. Build a client to talk to our instance of Rocket
@@ -255,6 +259,79 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
 
     // 4.1 Now verify that there are two currencies
     response = client.get("/currencies").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    // Lots of gyrations to find out that this is an array of two elements.
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    assert_eq!(v.as_array().unwrap().len(), 2);
+
+    Ok(())
+
+}
+
+// Examine transactions
+fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
+
+    // 1. GET /transactions, empty array
+    let mut response = client.get("/transactions").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // Lots of gyrations to find out that this is an array of zero elements.
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    assert_eq!(v.as_array().unwrap().len(), 0);
+
+    // 2. Try to post a new transaction, but trigger many errors first.
+
+    // 2.1 Post with a missing required field (title)
+    //response = client.post("/transactions")
+        //.body("apikey=key&currency_id=666")
+        //.header(ContentType::Form)
+        //.dispatch();
+    //assert_eq!(response.status(), Status::UnprocessableEntity);
+
+    // 2.2 Post with an extraneous field.  422.
+    response = client.post("/transactions")
+        .body("apikey=key&notes=initial capital&extraneous=true") // 422 unprocessable entity
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+
+    // 2.3 Post using an apikey that's too long.  400.
+    response = client.post("/transactions")
+        .body(format!("apikey={}&notes=initial capital", TOOLONG))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.4 Post using a non-existant apikey. 400
+    response = client.post("/transactions")
+        .body("apikey=notarealkey&notes=initial capital")
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.5 Successful post. 200.
+    response = client.post("/transactions")
+        .body(format!("apikey={}&notes=initial capital", apikey))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // 3. Now verify that's there's a single transaction
+    response = client.get("/transactions").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    // Lots of gyrations to find out that this is an array of one element.
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    assert_eq!(v.as_array().unwrap().len(), 1);
+
+    // 4. Make the 2nd Successful post. 200.
+    response = client.post("/transactions")
+        .body(format!("apikey={}&notes=initial capital", apikey))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // 4.1 Now verify that there are two transactions
+    response = client.get("/transactions").dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;

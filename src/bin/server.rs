@@ -164,5 +164,7 @@ fn main() {
             R::post_apikey,
             R::get_currencies,
             R::post_currency,
+            R::get_transactions,
+            R::post_transaction
         ]).launch();
 }
