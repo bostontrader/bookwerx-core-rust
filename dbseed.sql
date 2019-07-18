@@ -1,16 +1,16 @@
 /* The order of definition is important lest we trip over referential and foreign key issues */
 CREATE TABLE apikeys (
-  id int(11) unsigned NOT NULL AUTO_INCREMENT,
-  apikey varchar(45) NOT NULL,
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY (apikey)
 );
 
 CREATE TABLE currencies (
-  id int(11) unsigned NOT NULL AUTO_INCREMENT,
-  apikey varchar(45) NOT NULL,
-  symbol varchar(45) NOT NULL,
-  title varchar(45) NOT NULL,
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  symbol VARCHAR(45) NOT NULL,
+  title VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id),
   UNIQUE KEY (symbol),
@@ -18,10 +18,10 @@ CREATE TABLE currencies (
 );
 
 CREATE TABLE accounts (
-  id int(11) unsigned NOT NULL AUTO_INCREMENT,
-  apikey varchar(45) NOT NULL,
-  currency_id int(11) unsigned NOT NULL,
-  title varchar(45) NOT NULL,
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  currency_id INT UNSIGNED NOT NULL,
+  title VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
@@ -29,10 +29,24 @@ CREATE TABLE accounts (
 );
 
 CREATE TABLE transactions (
-  id int(11) unsigned NOT NULL AUTO_INCREMENT,
-  apikey varchar(45) NOT NULL,
-  notes text NOT NULL,
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  notes TEXT NOT NULL,
 
   PRIMARY KEY (id),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
+);
+
+/* A distribution doesn't need its own apikey because its related to accounts and transactions that do have them. */
+CREATE TABLE distributions (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  account_id INT UNSIGNED NOT NULL,
+  amount BIGINT NOT NULL,
+  amount_exp TINYINT NOT NULL,
+  transaction_id INT UNSIGNED NOT NULL,
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (account_id) REFERENCES accounts (id),
+  FOREIGN KEY (transaction_id) REFERENCES transactions (id)
+
 );

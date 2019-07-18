@@ -29,6 +29,7 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     currencies(&client, &apikey);
     accounts(&client, &apikey);
     transactions(&client, &apikey);
+    //distributions(&client, &apikey);
 
     Ok(())
 }
@@ -64,6 +65,7 @@ fn startup() -> Client {
             R::post_apikey,
             R::get_currencies,
             R::post_currency,
+            R::post_distribution,
             R::get_transactions,
             R::post_transaction
         ]);
@@ -77,7 +79,7 @@ fn startup() -> Client {
 fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. GET /accounts, empty array
-    let mut response = client.get("/accounts").dispatch();
+    let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
@@ -135,8 +137,8 @@ fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
-    // 3. Now verify that's there's a single account
-    response = client.get("/accounts").dispatch();
+    // 3. Now verify that there's a single account
+    response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
@@ -150,7 +152,7 @@ fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::
     assert_eq!(response.status(), Status::Ok);
 
     // 4.1 Now verify that there are two accounts
-    response = client.get("/accounts").dispatch();
+    response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
@@ -174,7 +176,8 @@ fn apikey(client: &Client) -> String {
 fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. GET /currencies, empty array
-    let mut response = client.get("/currencies").dispatch();
+    let mut response = client.get(format!("/currencies?apikey={}", &apikey))
+        .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
@@ -234,8 +237,9 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
-    // 3. Now verify that's there's a single currency and try to erroneously post a currency with a duplicated symbol
-    response = client.get("/currencies").dispatch();
+    // 3. Now verify that there's a single currency and try to erroneously post a currency with a duplicated symbol
+    response = client.get(format!("/currencies?apikey={}", &apikey))
+        .dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
@@ -258,7 +262,7 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
     assert_eq!(response.status(), Status::Ok);
 
     // 4.1 Now verify that there are two currencies
-    response = client.get("/currencies").dispatch();
+    response = client.get(format!("/currencies?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
@@ -272,7 +276,7 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
 fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. GET /transactions, empty array
-    let mut response = client.get("/transactions").dispatch();
+    let mut response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
@@ -281,28 +285,21 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
 
     // 2. Try to post a new transaction, but trigger many errors first.
 
-    // 2.1 Post with a missing required field (title)
-    //response = client.post("/transactions")
-        //.body("apikey=key&currency_id=666")
-        //.header(ContentType::Form)
-        //.dispatch();
-    //assert_eq!(response.status(), Status::UnprocessableEntity);
-
-    // 2.2 Post with an extraneous field.  422.
+    // 2.1 Post with an extraneous field.  422.
     response = client.post("/transactions")
         .body("apikey=key&notes=initial capital&extraneous=true") // 422 unprocessable entity
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
-    // 2.3 Post using an apikey that's too long.  400.
+    // 2.2 Post using an apikey that's too long.  400.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=initial capital", TOOLONG))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
-    // 2.4 Post using a non-existant apikey. 400
+    // 2.3 Post using a non-existant apikey. 400
     response = client.post("/transactions")
         .body("apikey=notarealkey&notes=initial capital")
         .header(ContentType::Form)
@@ -316,8 +313,8 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
 
-    // 3. Now verify that's there's a single transaction
-    response = client.get("/transactions").dispatch();
+    // 3. Now verify that there's a single transaction
+    response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
@@ -331,7 +328,7 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
     assert_eq!(response.status(), Status::Ok);
 
     // 4.1 Now verify that there are two transactions
-    response = client.get("/transactions").dispatch();
+    response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
     let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
