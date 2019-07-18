@@ -287,30 +287,31 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
 
     // 2.1 Post with an extraneous field.  422.
     response = client.post("/transactions")
-        .body("apikey=key&notes=initial capital&extraneous=true") // 422 unprocessable entity
+        .body("apikey=key&notes=initial capital&time=now&extraneous=true") // 422 unprocessable entity
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::UnprocessableEntity);
 
     // 2.2 Post using an apikey that's too long.  400.
     response = client.post("/transactions")
-        .body(format!("apikey={}&notes=initial capital", TOOLONG))
+        .body(format!("apikey={}&notes=initial capital&time=now", TOOLONG))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
     // 2.3 Post using a non-existant apikey. 400
     response = client.post("/transactions")
-        .body("apikey=notarealkey&notes=initial capital")
+        .body("apikey=notarealkey&notes=initial capital&time=now")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::BadRequest);
 
     // 2.5 Successful post. 200.
     response = client.post("/transactions")
-        .body(format!("apikey={}&notes=initial capital", apikey))
+        .body(format!("apikey={}&notes=initial capital&time=now", apikey))
         .header(ContentType::Form)
         .dispatch();
+    println!("{:?}", response.body_string().unwrap());
     assert_eq!(response.status(), Status::Ok);
 
     // 3. Now verify that there's a single transaction
@@ -322,7 +323,7 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
 
     // 4. Make the 2nd Successful post. 200.
     response = client.post("/transactions")
-        .body(format!("apikey={}&notes=initial capital", apikey))
+        .body(format!("apikey={}&notes=initial capital&time=now", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);

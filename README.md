@@ -89,3 +89,13 @@ BCR_MODE - Run the server in whatever mode.
 **bookwerx-core-rust** uses MySQL for the db.  [This is configured separately.](https://dev.mysql.com)
 
 Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that people might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your MySQL server to get the particular settings that you want.
+
+## Dates and Times
+
+Dealing with dates and times is a bottomless pit of complexity.  I'll make this easier for everybody involved by promulgating the following policy:
+
+A transaction occurs at a single instant in time with said time recorded as any string format suitable to your app.
+
+One practical example would be an ISO-8601 string.  Said strings can have the quantity of seconds recorded to an unknown, but sufficient, quantity of decimal places.  For example: "2019-07-20T15:32:17.00000001Z"  This will get you started and you can run a long time before you outgrow this plan.
+
+If your app really needs to deal with time-dialation that arises because the different parts of your operation are at different heights in the Earth's gravity well, fine... just do it.  Just code up whatever time makes sense in your personal twilight zone and stuff it into the transaction record.

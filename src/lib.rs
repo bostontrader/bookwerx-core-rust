@@ -106,13 +106,15 @@ pub mod routes {
     pub struct Transaction {
         id: u32,
         apikey: String,
-        notes: String
+        notes: String,
+        time: String
     }
 
     #[derive(FromForm)]
     pub struct TransactionShort {
         apikey: String,
-        notes: String
+        notes: String,
+        time: String
     }
 
     impl<'r> Responder<'r> for ApiResponse {
@@ -307,18 +309,19 @@ pub mod routes {
         v1.push(apikey.html_escape().to_mut().clone());
 
         let vec: Vec<Transaction> =
-            conn.prep_exec("SELECT id, apikey, notes from transactions where apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, notes, time from transactions where apikey = :apikey", v1)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, apikey, notes) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, apikey, notes, time) = rocket_contrib::databases::mysql::from_row(row);
                         Transaction {
                             id: id,
                             apikey: apikey,
-                            notes: notes
+                            notes: notes,
+                            time: time
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
                 }).unwrap(); // Unwrap `Vec<Payment>`
@@ -330,7 +333,7 @@ pub mod routes {
     #[post("/transactions", data="<transaction>")]
     pub fn post_transaction(transaction: rocket::request::Form<TransactionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO transactions (apikey, notes) VALUES (:apikey, :notes)",(&transaction.apikey, &transaction.notes));
+        let n = conn.prep_exec("INSERT INTO transactions (apikey, notes, time) VALUES (:apikey, :notes, :time)",(&transaction.apikey, &transaction.notes, &transaction.time));
         match n {
             Ok(_result) => ApiResponse {
                 json: json!({"last_insert_id": _result.last_insert_id()}),

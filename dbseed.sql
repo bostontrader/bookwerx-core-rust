@@ -32,6 +32,7 @@ CREATE TABLE transactions (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   apikey VARCHAR(45) NOT NULL,
   notes TEXT NOT NULL,
+  time VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
