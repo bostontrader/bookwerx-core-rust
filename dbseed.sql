@@ -12,7 +12,7 @@ CREATE TABLE currencies (
   symbol VARCHAR(45) NOT NULL,
   title VARCHAR(45) NOT NULL,
 
-  PRIMARY KEY (id),
+  PRIMARY KEY (id, apikey),
   UNIQUE KEY (symbol),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
 );
@@ -23,9 +23,9 @@ CREATE TABLE accounts (
   currency_id INT UNSIGNED NOT NULL,
   title VARCHAR(45) NOT NULL,
 
-  PRIMARY KEY (id),
+  PRIMARY KEY (id, apikey),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
-  FOREIGN KEY (currency_id) REFERENCES currencies (id)
+  FOREIGN KEY (currency_id, apikey) REFERENCES currencies (id, apikey)
 );
 
 CREATE TABLE transactions (
@@ -34,20 +34,20 @@ CREATE TABLE transactions (
   notes TEXT NOT NULL,
   time VARCHAR(45) NOT NULL,
 
-  PRIMARY KEY (id),
+  PRIMARY KEY (id, apikey),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
 );
 
-/* A distribution doesn't need its own apikey because its related to accounts and transactions that do have them. */
 CREATE TABLE distributions (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   account_id INT UNSIGNED NOT NULL,
   amount BIGINT NOT NULL,
   amount_exp TINYINT NOT NULL,
+  apikey VARCHAR(45) NOT NULL,
   transaction_id INT UNSIGNED NOT NULL,
 
-  PRIMARY KEY (id),
-  FOREIGN KEY (account_id) REFERENCES accounts (id),
-  FOREIGN KEY (transaction_id) REFERENCES transactions (id)
+  PRIMARY KEY (id, apikey),
+  FOREIGN KEY (account_id, apikey) REFERENCES accounts (id, apikey),
+  FOREIGN KEY (transaction_id, apikey) REFERENCES transactions (id, apikey)
 
 );

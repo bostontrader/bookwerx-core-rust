@@ -26,10 +26,10 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     let apikey: String = apikey(&client);
 
     // 2. Test in this order in order to accommodate referential integrity
-    currencies(&client, &apikey);
-    accounts(&client, &apikey);
-    transactions(&client, &apikey);
-    //distributions(&client, &apikey);
+    let currencies = currencies(&client, &apikey);
+    let accounts = accounts(&client, &apikey);
+    let transactions = transactions(&client, &apikey);
+    distributions(&client, &apikey, &accounts, &transactions);
 
     Ok(())
 }
@@ -65,6 +65,7 @@ fn startup() -> Client {
             R::post_apikey,
             R::get_currencies,
             R::post_currency,
+            R::get_distributions,
             R::post_distribution,
             R::get_transactions,
             R::post_transaction
@@ -76,14 +77,14 @@ fn startup() -> Client {
 }
 
 // Examine accounts
-fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn accounts(client: &Client, apikey: &String) -> Vec<R::Account> {
 
     // 1. GET /accounts, empty array
     let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 0);
 
     // 2. Try to post a new account, but trigger many errors first.
@@ -141,7 +142,7 @@ fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 1);
 
     // 4. Make the 2nd Successful post. 200. (why does currency_id skip from 2 to 4?
@@ -155,10 +156,10 @@ fn accounts(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
-    assert_eq!(v.as_array().unwrap().len(), 2);
+    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 2);
 
-    Ok(())
+    v
 
 }
 
@@ -173,7 +174,7 @@ fn apikey(client: &Client) -> String {
 }
 
 // Examine currencies
-fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn currencies(client: &Client, apikey: &String) -> Vec<R::Currency> {
 
     // 1. GET /currencies, empty array
     let mut response = client.get(format!("/currencies?apikey={}", &apikey))
@@ -181,7 +182,7 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 0);
 
     // 2. Try to post a new currency, but trigger many errors first.
@@ -242,7 +243,7 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 1);
 
     // 3.1 Duplicate post. 400.
@@ -265,22 +266,99 @@ fn currencies(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error
     response = client.get(format!("/currencies?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
-    assert_eq!(v.as_array().unwrap().len(), 2);
+    let v: Vec<R::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 2);
 
-    Ok(())
+    v
+
+}
+
+// Examine distributions.  These are substantially different than the other resources.
+fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
+
+    // 1. GET /distributions, empty array
+    // A distribution does not have an apikey, but its parent transaction does.  Make sure all this matches.
+    let account_id: u32 = (*accounts.get(0).unwrap()).id;
+    let transaction_id: u32 = (*transactions.get(0).unwrap()).id;
+
+    let mut response = client.get(format!("/distributions?apikey={}&transaction_id={}", &apikey, &transaction_id)).dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // Lots of gyrations to find out that this is an array of zero elements.
+    let v: Vec<R::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 0);
+
+    // 2. Try to post a new distribution, but trigger many errors first.
+
+    // 2.1 Post with an extraneous field.  422.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=12345&amount_exp=-2&apikey={}&transaction_id={}&extraneous=true", account_id, apikey, transaction_id)) // 422 unprocessable entity
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+
+    // 2.2 Post using a non-integer amount.  422.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=nonnumeric&amount_exp=-2&apikey={}&transaction_id={}", account_id, apikey, transaction_id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+
+    // 2.2 Post using a non-integer exp.  422.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=1000&amount_exp=nonnumeric&apikey={}&transaction_id={}", account_id, apikey, transaction_id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::UnprocessableEntity);
+
+    // 2.3 Post using an apikey that's too long.  400.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=1000&amount_exp=0&apikey={}&transaction_id={}", account_id, TOOLONG, transaction_id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::BadRequest);
+
+    // 2.5 Successful post. 200.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=12550&amount_exp=-2&apikey={}&transaction_id={}", account_id, apikey, transaction_id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // 3. Now verify that there's a single distribution
+    response = client.get(format!("/distributions?apikey={}&transaction_id={}", &apikey, &transaction_id)).dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    // Lots of gyrations to find out that this is an array of one element.
+    let v: Vec<R::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 1);
+
+    // 4. Make the 2nd Successful post. 200.
+    response = client.post("/distributions")
+        .body(format!("account_id={}&amount=-12550&amount_exp=-2&apikey={}&transaction_id={}", account_id, apikey, transaction_id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+
+    // 4.1 Now verify that there are two distributions
+    response = client.get(format!("/distributions?apikey={}&transaction_id={}", &apikey, &transaction_id)).dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    // Lots of gyrations to find out that this is an array of two elements.
+    let v: Vec<R::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 2);
+
+    v
 
 }
 
 // Examine transactions
-fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::error::Error>> {
+fn transactions(client: &Client, apikey: &String) -> Vec<R::Transaction> {
 
     // 1. GET /transactions, empty array
     let mut response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 0);
 
     // 2. Try to post a new transaction, but trigger many errors first.
@@ -318,7 +396,7 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
+    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.as_array().unwrap().len(), 1);
 
     // 4. Make the 2nd Successful post. 200.
@@ -332,9 +410,9 @@ fn transactions(client: &Client, apikey: &String) -> Result<(), Box<dyn std::err
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of two elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..])?;
-    assert_eq!(v.as_array().unwrap().len(), 2);
+    let v: Vec<R::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 2);
 
-    Ok(())
+    v
 
 }

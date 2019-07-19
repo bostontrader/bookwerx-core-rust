@@ -52,9 +52,9 @@ pub mod routes {
         status: Status,
     }
 
-    #[derive(Serialize)]
+    #[derive(Deserialize, Serialize)]
     pub struct Account {
-        id: u32,
+        pub id: u32,
         apikey: String,
         currency_id: u32,
         title: String
@@ -70,7 +70,7 @@ pub mod routes {
     #[derive(Deserialize)]
     pub struct Apikey { pub apikey: String }
 
-    #[derive(Serialize)]
+    #[derive(Deserialize, Serialize)]
     pub struct Currency {
         id: u32,
         apikey: String,
@@ -85,12 +85,13 @@ pub mod routes {
         title: String,
     }
 
-    #[derive(Serialize)]
+    #[derive(Deserialize, Serialize)]
     pub struct Distribution {
         id: u32,
         account_id: u32,
         amount: i64,
         amount_exp: i8,
+        apikey: String,
         transaction_id: u32
     }
 
@@ -99,12 +100,13 @@ pub mod routes {
         account_id: u32,
         amount: i64,
         amount_exp: i8,
+        apikey: String,
         transaction_id: u32
     }
 
-    #[derive(Serialize)]
+    #[derive(Deserialize, Serialize)]
     pub struct Transaction {
-        id: u32,
+        pub id: u32,
         apikey: String,
         notes: String,
         time: String
@@ -256,36 +258,36 @@ pub mod routes {
         }
     }
 
-    // We only get distributions as part of a transaction
-    /*#[get("/distributions")]
-    pub fn get_distributions(mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Distribution>> {
+    #[get("/distributions?<apikey>&<transaction_id>")]
+    pub fn get_distributions(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Distribution>> {
         let vec: Vec<Distribution> =
-            conn.prep_exec("SELECT id, account_id, amount, amount_exp, transaction_id from distributions", ())
+            conn.prep_exec("SELECT id, account_id, amount, amount_exp, apikey, transaction_id from distributions", ())
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, account_id, amount, amount_exp, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, account_id, amount, amount_exp, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
                         Distribution {
                             id: id,
                             account_id: account_id,
                             amount: amount,
                             amount_exp: amount_exp,
+                            apikey: apikey,
                             transaction_id: transaction_id
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
                 }).unwrap(); // Unwrap `Vec<Payment>`
 
         Json(vec)
-    }*/
-
+    }
 
     #[post("/distributions", data="<distribution>")]
     pub fn post_distribution(distribution: rocket::request::Form<DistributionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO distributions (account_id, amount, amount_exp, transaction_id) VALUES (:account_id, :amount, :amount_exp, :transaction_id)",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.transaction_id));
+        let n = conn.prep_exec("INSERT INTO distributions (account_id, amount, amount_exp, apikey, transaction_id) VALUES (:account_id, :amount, :amount_exp, :apikey, :transaction_id)",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.apikey, &distribution.transaction_id));
+
         match n {
             Ok(_result) => ApiResponse {
                 json: json!({"last_insert_id": _result.last_insert_id()}),
