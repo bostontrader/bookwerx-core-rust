@@ -46,6 +46,11 @@ pub mod routes {
     use rocket::response::{Responder, Response};
     use rocket_contrib::json::{Json, JsonValue};
 
+    #[derive(Serialize)]
+    pub struct About {
+        about: String
+    }
+
     #[derive(Debug)]
     pub struct ApiResponse {
         json: JsonValue,
@@ -129,8 +134,8 @@ pub mod routes {
     }
 
     #[get("/")]
-    pub fn index() -> &'static str {
-        "Welcome to bookwerx-core-rust"
+    pub fn index() -> Json<About> {
+        Json(About{about:"bookwerx-core-rust v0.6.0".to_string()})
     }
 
     #[get("/accounts?<apikey>")]
