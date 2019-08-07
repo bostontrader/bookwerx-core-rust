@@ -13,7 +13,7 @@ CREATE TABLE currencies (
   title VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id, apikey),
-  UNIQUE KEY (symbol),
+  UNIQUE KEY (symbol, apikey),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
 );
 

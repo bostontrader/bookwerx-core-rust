@@ -47,8 +47,8 @@ pub mod routes {
     use rocket_contrib::json::{Json, JsonValue};
 
     #[derive(Serialize)]
-    pub struct About {
-        about: String
+    pub struct Ping {
+        ping: String
     }
 
     #[derive(Debug)]
@@ -77,7 +77,7 @@ pub mod routes {
 
     #[derive(Deserialize, Serialize)]
     pub struct Currency {
-        id: u32,
+        pub id: u32,
         apikey: String,
         symbol: String,
         title: String
@@ -129,14 +129,19 @@ pub mod routes {
             Response::build_from(self.json.respond_to(&req).unwrap())
                 .status(self.status)
                 .header(ContentType::JSON)
+                .raw_header("Access-Control-Allow-Origin", "*")
                 .ok()
         }
     }
 
     #[get("/")]
-    pub fn index() -> Json<About> {
-        Json(About{about:"bookwerx-core-rust v0.6.0".to_string()})
+    pub fn index() -> ApiResponse {
+        ApiResponse {
+            json: json!({"ping": "bookwerx-core-rust v0.7.0".to_string()}),
+            status: Status::Ok,
+        }
     }
+
 
     #[get("/accounts?<apikey>")]
     pub fn get_accounts(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Account>> {
@@ -145,12 +150,9 @@ pub mod routes {
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        //let vec: Vec<Currency> =
-            //conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
-
         let vec: Vec<Account> =
             conn.prep_exec("SELECT id, apikey, currency_id, title from accounts where apikey = :apikey", v1)
-                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
@@ -163,8 +165,8 @@ pub mod routes {
                             currency_id: currency_id,
                             title: title
                         }
-                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
-                }).unwrap(); // Unwrap `Vec<Payment>`
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
+                }).unwrap(); // Unwrap `Vec<Account>`
 
         Json(vec)
     }
@@ -217,7 +219,8 @@ pub mod routes {
     }
 
     #[get("/currencies?<apikey>")]
-    pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Currency>> {
+    //pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Currency>> {
+    pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql paramterization can use.
         let mut v1  = Vec::new();
@@ -225,7 +228,7 @@ pub mod routes {
 
         let vec: Vec<Currency> =
             conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
-            .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+            .map(|result| { // In this closure we will map `QueryResult` to `Vec<Currency>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                 // will map each `MyResult` to contained `row` (no proper error handling)
                 // and second call to `map` will map each `row` to `Payment`
@@ -238,11 +241,15 @@ pub mod routes {
                         symbol: symbol,
                         title: title
                     }
-                }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
-            }).unwrap(); // Unwrap `Vec<Payment>`
+                }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Currency>`
+            }).unwrap(); // Unwrap `Vec<Currency>`
 
-        Json(vec)
+        ApiResponse {
+            json: json!(vec),
+            status: Status::Ok,
+        }
     }
+
 
     #[post("/currencies", data="<currency>")]
     pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
@@ -251,7 +258,7 @@ pub mod routes {
 
         match n {
             Ok(_result) => ApiResponse {
-                json: json!({"last_insert_id": _result.last_insert_id()}),
+                json: json!({"data":{"last_insert_id": _result.last_insert_id().to_string()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
@@ -263,11 +270,12 @@ pub mod routes {
         }
     }
 
+
     #[get("/distributions?<apikey>&<transaction_id>")]
     pub fn get_distributions(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Distribution>> {
         let vec: Vec<Distribution> =
             conn.prep_exec("SELECT id, account_id, amount, amount_exp, apikey, transaction_id from distributions", ())
-                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Distribution>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
@@ -282,8 +290,8 @@ pub mod routes {
                             apikey: apikey,
                             transaction_id: transaction_id
                         }
-                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
-                }).unwrap(); // Unwrap `Vec<Payment>`
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Distribution>`
+                }).unwrap(); // Unwrap `Vec<Distribution>`
 
         Json(vec)
     }
@@ -317,7 +325,7 @@ pub mod routes {
 
         let vec: Vec<Transaction> =
             conn.prep_exec("SELECT id, apikey, notes, time from transactions where apikey = :apikey", v1)
-                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Payment>`
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Transaction>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
@@ -330,8 +338,8 @@ pub mod routes {
                             notes: notes,
                             time: time
                         }
-                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Payment>`
-                }).unwrap(); // Unwrap `Vec<Payment>`
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Transaction>`
+                }).unwrap(); // Unwrap `Vec<Transaction>`
 
         Json(vec)
     }

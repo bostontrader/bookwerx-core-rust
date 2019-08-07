@@ -27,9 +27,9 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
 
     // 2. Test in this order in order to accommodate referential integrity
     let currencies = currencies(&client, &apikey);
-    let accounts = accounts(&client, &apikey);
+    let accounts = accounts(&client, &apikey, &currencies);
     let transactions = transactions(&client, &apikey);
-    distributions(&client, &apikey, &accounts, &transactions);
+    let distributions = distributions(&client, &apikey, &accounts, &transactions);
 
     Ok(())
 }
@@ -77,15 +77,15 @@ fn startup() -> Client {
 }
 
 // Examine accounts
-fn accounts(client: &Client, apikey: &String) -> Vec<R::Account> {
+fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>) -> Vec<R::Account> {
 
     // 1. GET /accounts, empty array
     let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 0);
+    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 0);
 
     // 2. Try to post a new account, but trigger many errors first.
 
@@ -133,7 +133,7 @@ fn accounts(client: &Client, apikey: &String) -> Vec<R::Account> {
 
     // 2.5 Successful post. 200. WTF with the currency_id??
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id=2&title=cash in mattress", apikey))
+        .body(format!("apikey={}&currency_id={}&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -142,12 +142,12 @@ fn accounts(client: &Client, apikey: &String) -> Vec<R::Account> {
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
+    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 1);
 
-    // 4. Make the 2nd Successful post. 200. (why does currency_id skip from 2 to 4?
+    // 4. Make the 2nd Successful post. 200.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id=4&title=bank of mises", apikey))
+        .body(format!("apikey={}&currency_id={}&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -180,14 +180,13 @@ fn currencies(client: &Client, apikey: &String) -> Vec<R::Currency> {
     let mut response = client.get(format!("/currencies?apikey={}", &apikey))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
-
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 0);
+    let v: Vec<R::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 0);
 
     // 2. Try to post a new currency, but trigger many errors first.
 
-    // 2.1 Post with a missing required field (title)
+    // 2.1 Post with a missing required field (title). 422.
     response = client.post("/currencies")
         .body("apikey=key&symbol=value&otherField=123")
         .header(ContentType::Form)
@@ -243,8 +242,8 @@ fn currencies(client: &Client, apikey: &String) -> Vec<R::Currency> {
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
+    let v: Vec<R::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 1);
 
     // 3.1 Duplicate post. 400.
     response = client.post("/currencies")
@@ -265,7 +264,7 @@ fn currencies(client: &Client, apikey: &String) -> Vec<R::Currency> {
     // 4.1 Now verify that there are two currencies
     response = client.get(format!("/currencies?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
-    // Lots of gyrations to find out that this is an array of two elements.
+    // Lots of gyrations to find out that this is an array of two elements.*/
     let v: Vec<R::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(v.len(), 2);
 
@@ -358,8 +357,8 @@ fn transactions(client: &Client, apikey: &String) -> Vec<R::Transaction> {
     assert_eq!(response.status(), Status::Ok);
 
     // Lots of gyrations to find out that this is an array of zero elements.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 0);
+    let v: Vec<R::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 0);
 
     // 2. Try to post a new transaction, but trigger many errors first.
 
@@ -396,8 +395,8 @@ fn transactions(client: &Client, apikey: &String) -> Vec<R::Transaction> {
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     // Lots of gyrations to find out that this is an array of one element.
-    let v: serde_json::Value = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(v.as_array().unwrap().len(), 1);
+    let v: Vec<R::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(v.len(), 1);
 
     // 4. Make the 2nd Successful post. 200.
     response = client.post("/transactions")

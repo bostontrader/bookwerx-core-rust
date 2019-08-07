@@ -15,7 +15,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.6.0") // Keep this in sync with TOML
+        (version: "0.7.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -154,9 +154,20 @@ fn main() {
         .port(bind_port_value.parse::<u16>().unwrap())
         .finalize().unwrap();
 
-    // 3.3 Finally, launch it
+    // 3.3 Configure CORS
+    let cors = rocket_cors::CorsOptions {
+        send_wildcard: true,
+        ..Default::default()
+    }
+        .to_cors().unwrap();
+
+    println!("{:?}", cors);
+
+
+    // 3.4 Finally, launch it
     rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
+        .attach(cors)
         .mount("/", routes![
             R::index,
             R::get_accounts,

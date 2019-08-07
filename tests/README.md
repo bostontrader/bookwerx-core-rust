@@ -1,8 +1,12 @@
-Example:
+Examples:
 
-RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test config
+RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test
 
-This runs just the config.rs test.  It uses a single thread, thus forcing the tests to run sequentially.
+Run all tests.  This command uses a single thread, thus forcing the tests to run sequentially. We need to do this because I've been a bad boy and made tests that are not independent.
+
+RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test server_config
+
+This runs just the config.rs test.
 
 Integration tests:
 
