@@ -15,7 +15,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.7.0") // Keep this in sync with TOML
+        (version: "0.8.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -171,11 +171,22 @@ fn main() {
         .mount("/", routes![
             R::index,
             R::get_accounts,
+            R::get_account,
             R::post_account,
+            R::put_account,
             R::post_apikey,
             R::get_currencies,
+            R::get_currency,
             R::post_currency,
+            R::put_currency,
+            R::delete_currency,
+            R::get_distribution,
+            R::get_distributions,
+            R::post_distribution,
+            R::put_distribution,
             R::get_transactions,
-            R::post_transaction
+            R::get_transaction,
+            R::post_transaction,
+            R::put_transaction
         ]).launch();
 }
