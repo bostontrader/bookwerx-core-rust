@@ -106,6 +106,7 @@ pub mod routes {
     pub struct Currency {
         pub id: u32,
         apikey: String,
+        rarity: u8,
         symbol: String,
         title: String
     }
@@ -113,6 +114,7 @@ pub mod routes {
     #[derive(FromForm)]
     pub struct CurrencyShort {
         apikey: String,
+        rarity: u8,
         symbol: String,
         title: String,
     }
@@ -164,7 +166,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.8.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.9.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -327,17 +329,18 @@ pub mod routes {
         v1.push(apikey.html_escape().to_mut().clone());
 
         let vec: Vec<Currency> =
-            conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where apikey = :apikey", v1)
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<Currency>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                 // will map each `MyResult` to contained `row` (no proper error handling)
                 // and second call to `map` will map each `row` to `Payment`
                 result.map(|x| x.unwrap()).map(|row| {
                     // ⚠️ Note that from_row will panic if you don't follow the schema
-                    let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                    let (id, apikey, rarity, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
                     Currency {
                         id: id,
                         apikey: apikey,
+                        rarity: rarity,
                         symbol: symbol,
                         title: title
                     }
@@ -362,7 +365,7 @@ pub mod routes {
 
         let vec: Vec<Currency> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
-            conn.prep_exec("SELECT id, apikey, symbol, title from currencies where id = :id and apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where id = :id and apikey = :apikey", v1)
 
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<Currency>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -370,10 +373,11 @@ pub mod routes {
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, apikey, rarity, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
                         Currency {
                             id: id,
                             apikey: apikey,
+                            rarity: rarity,
                             symbol: symbol,
                             title: title
                         }
@@ -409,7 +413,8 @@ pub mod routes {
     #[post("/currencies", data="<currency>")]
     pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO currencies (apikey, symbol, title) VALUES (:apikey, :symbol, :title)",(&currency.apikey, &currency.symbol, &currency.title));
+        let n = conn.prep_exec("INSERT INTO currencies (apikey, rarity, symbol, title) VALUES (:apikey, :rarity, :symbol, :title)",(
+            &currency.apikey, &currency.rarity, &currency.symbol, &currency.title));
 
         match n {
             Ok(_result) => ApiResponse {
@@ -456,7 +461,8 @@ pub mod routes {
     #[put("/currencies", data="<currency>")]
     pub fn put_currency(currency: rocket::request::Form<Currency>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("UPDATE currencies SET symbol = :symbol, title = :title where id = :id and apikey = :apikey",(&currency.symbol, &currency.title, &currency.id, &currency.apikey));
+        let n = conn.prep_exec("UPDATE currencies SET rarity = :rarity, symbol = :symbol, title = :title where id = :id and apikey = :apikey",(
+            &currency.rarity, &currency.symbol, &currency.title, &currency.id, &currency.apikey));
 
         match n {
             Ok(_result) => ApiResponse {
