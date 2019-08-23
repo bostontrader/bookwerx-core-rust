@@ -47,48 +47,13 @@ pub mod routes {
     use rocket::response::{Responder, Response};
     use rocket_contrib::json::{Json, JsonValue};
 
-    #[derive(Serialize)]
-    pub struct Ping {
-        ping: String
-    }
-
-    #[derive(Debug)]
-    pub struct ApiResponse {
-        json: JsonValue,
-        status: Status,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct ApiError {
-        pub error: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct InsertMessage {
-        pub last_insert_id: u32
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct InsertSuccess {
-        pub data: InsertMessage
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct UpdateMessage {
-        pub info: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct UpdateSuccess {
-        pub data: UpdateMessage
-    }
-
 
     #[derive(Deserialize, FromForm, Serialize)]
     pub struct Account {
         pub id: u32,
         apikey: String,
         currency_id: u32,
+        rarity: u8,
         title: String
     }
 
@@ -96,11 +61,23 @@ pub mod routes {
     pub struct AccountShort {
         apikey: String,
         currency_id: u32,
+        rarity: u8,
         title: String
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct ApiError {
+        pub error: String
     }
 
     #[derive(Deserialize)]
     pub struct Apikey { pub apikey: String }
+
+    #[derive(Debug)]
+    pub struct ApiResponse {
+        json: JsonValue,
+        status: Status,
+    }
 
     #[derive(Debug, Deserialize, FromForm, Serialize)]
     pub struct Currency {
@@ -138,6 +115,21 @@ pub mod routes {
         transaction_id: u32
     }
 
+    #[derive(Debug, Deserialize)]
+    pub struct InsertMessage {
+        pub last_insert_id: u32
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct InsertSuccess {
+        pub data: InsertMessage
+    }
+
+    #[derive(Serialize)]
+    pub struct Ping {
+        ping: String
+    }
+
     #[derive(Deserialize, FromForm, Serialize)]
     pub struct Transaction {
         pub id: u32,
@@ -153,6 +145,17 @@ pub mod routes {
         time: String
     }
 
+    #[derive(Debug, Deserialize)]
+    pub struct UpdateMessage {
+        pub info: String
+    }
+
+    #[derive(Debug, Deserialize)]
+    pub struct UpdateSuccess {
+        pub data: UpdateMessage
+    }
+
+
     impl<'r> Responder<'r> for ApiResponse {
         fn respond_to(self, req: &Request) -> response::Result<'r> {
             Response::build_from(self.json.respond_to(&req).unwrap())
@@ -166,7 +169,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.9.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.10.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -180,18 +183,19 @@ pub mod routes {
         v1.push(apikey.html_escape().to_mut().clone());
 
         let vec: Vec<Account> =
-            conn.prep_exec("SELECT id, apikey, currency_id, title from accounts where apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, currency_id, rarity, title from accounts where apikey = :apikey", v1)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, apikey, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, apikey, currency_id, rarity, title) = rocket_contrib::databases::mysql::from_row(row);
                         Account {
                             id: id,
                             apikey: apikey,
                             currency_id: currency_id,
+                            rarity: rarity,
                             title: title
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
@@ -211,7 +215,7 @@ pub mod routes {
 
         let vec: Vec<Account> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from accounts where apikey = :apikey", v1)
-            conn.prep_exec("SELECT id, apikey, currency_id, title from accounts where id = :id and apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, currency_id, rarity, title from accounts where id = :id and apikey = :apikey", v1)
 
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -219,11 +223,12 @@ pub mod routes {
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, apikey, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
+                        let (id, apikey, currency_id, rarity, title) = rocket_contrib::databases::mysql::from_row(row);
                         Account {
                             id: id,
                             apikey: apikey,
                             currency_id: currency_id,
+                            rarity: rarity,
                             title: title
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
@@ -258,7 +263,8 @@ pub mod routes {
     #[post("/accounts", data="<account>")]
     pub fn post_account(account: rocket::request::Form<AccountShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("INSERT INTO accounts (apikey, currency_id, title) VALUES (:apikey, :currency_id, :title)",(&account.apikey, &account.currency_id, &account.title));
+        let n = conn.prep_exec("INSERT INTO accounts (apikey, currency_id, rarity, title) VALUES (:apikey, :currency_id, :rarity, :title)",(
+            &account.apikey, &account.currency_id, &account.rarity, &account.title));
         match n {
             Ok(_result) => ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
@@ -277,7 +283,8 @@ pub mod routes {
     #[put("/accounts", data="<account>")]
     pub fn put_account(account: rocket::request::Form<Account>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let n = conn.prep_exec("UPDATE accounts SET currency_id = :currency_id, title = :title where id = :id and apikey = :apikey",(&account.currency_id, &account.title, &account.id, &account.apikey));
+        let n = conn.prep_exec("UPDATE accounts SET currency_id = :currency_id, rarity = :rarity, title = :title where id = :id and apikey = :apikey",(
+            &account.currency_id, &account.rarity, &account.title, &account.id, &account.apikey));
 
         match n {
             Ok(_result) => ApiResponse {

@@ -15,7 +15,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 2.1. But first post using a non-existent apikey. 200 and db error.
     response = client.post("/accounts")
-        .body(format!("apikey=notarealkey&currency_id={}&title=cash in mattress", (currencies.get(0).unwrap()).id))
+        .body(format!("apikey=notarealkey&currency_id={}&rarity=0&title=cash in mattress", (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -27,7 +27,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 2.2 Successful post. 200 and InsertSuccess.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id={}&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     let li: R::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -37,7 +37,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 2.3 Successful put. 200  and UpdateSuccess
     response = client.put("/accounts")
-        .body(format!("apikey={}&id={}&currency_id={}&title=cash in mattress", apikey, li.data.last_insert_id, (currencies.get(0).unwrap()).id))
+        .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=cash in mattress", apikey, li.data.last_insert_id, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     let r: R::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -53,7 +53,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 4. Try to post w/bad currency id
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id=666&title=cash in mattress", apikey))
+        .body(format!("apikey={}&currency_id=666&rarity=0&title=cash in mattress", apikey))
         .header(ContentType::Form)
         .dispatch();
     let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -70,7 +70,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 6. Make the 2nd Successful post. 200.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id={}&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     let r: R::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
