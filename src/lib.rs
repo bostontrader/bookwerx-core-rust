@@ -169,7 +169,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.10.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.11.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -485,8 +485,9 @@ pub mod routes {
         }
     }
 
-    #[get("/distribution/<id>?<apikey>")]
-    pub fn get_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    // Nobody cares about a naked distribution
+    //#[get("/distribution/<id>?<apikey>")]
+    /*pub fn get_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -536,11 +537,7 @@ pub mod routes {
                 status: Status::Ok,
             }
         }
-
-
-
-
-    }
+    } */
 
     #[get("/distributions?<apikey>&<transaction_id>")]
     //pub fn get_distributions(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Distribution>> {
@@ -587,7 +584,7 @@ pub mod routes {
 
         match n {
             Ok(_result) => ApiResponse {
-                json: json!({"last_insert_id": _result.last_insert_id()}),
+                json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {

@@ -6,6 +6,7 @@
 mod mod_accounts;
 mod mod_apikey;
 mod mod_currencies;
+mod mod_distributions;
 mod mod_transactions;
 
 use bookwerx_core_rust::constants as C;
@@ -18,8 +19,6 @@ use rocket::http::Status;
 use rocket::local::Client;
 
 use std::collections::HashMap;
-
-const TOOLONG: &str = "... what can this strange device be... when I touch it, it gives forth a sound.";
 
 #[test]
 fn test() -> Result<(), Box<dyn std::error::Error>> {
@@ -37,11 +36,12 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn kahuna_grande(client: &Client, apikey: &String) {
+
     // Test in this order in order to accommodate referential integrity
     let currencies = mod_currencies::currencies(&client, &apikey);
     let accounts = mod_accounts::accounts(&client, &apikey, &currencies);
     let transactions = mod_transactions::transactions(&client, &apikey);
-    //let distributions = distributions(&client, &apikey, &accounts, &transactions);
+    let distributions = mod_distributions::distributions(&client, &apikey, &accounts, &transactions);
 }
 
 fn startup() -> Client {
@@ -84,6 +84,7 @@ fn startup() -> Client {
 
             R::get_distributions,
             R::post_distribution,
+            R::put_distribution,
 
             R::get_transaction,
             R::get_transactions,
@@ -99,7 +100,7 @@ fn startup() -> Client {
 
 
 // Examine distributions.  These are substantially different than the other resources.
-fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
+/*fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
 
     // 1. GET /distributions, empty array
     // A distribution does not have an apikey, but its parent transaction does.  Make sure all this matches.
@@ -173,4 +174,4 @@ fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, t
 
     v
 
-}
+}*/

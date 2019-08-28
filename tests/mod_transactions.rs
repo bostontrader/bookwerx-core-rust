@@ -33,7 +33,7 @@ pub fn transactions(client: &Client, apikey: &String) -> Vec<R::Transaction> {
     assert!(li.data.last_insert_id > 0);
     // {"data":{"last_insert_id":"54"}}
 
-    // 2.3 Successful put. 200  and UpdateSuccess
+    // 2.3 Successful put. 200 and UpdateSuccess
     response = client.put("/transactions")
         .body(format!("apikey={}&id={}&notes=notes&time=12:00", apikey, li.data.last_insert_id))
         .header(ContentType::Form)
@@ -73,7 +73,6 @@ pub fn transactions(client: &Client, apikey: &String) -> Vec<R::Transaction> {
     // 6.1 Now verify that there are two transactions
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
     let v: Vec<R::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 2);
 
