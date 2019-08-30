@@ -106,6 +106,20 @@ pub mod routes {
         transaction_id: u32
     }
 
+    // This struct supports the ability to easily produce a list of distributions for a particular account.
+    #[derive(Deserialize, Serialize)]
+    pub struct DistributionJoined {
+        id: u32,
+        tid: u32,
+        aid: u32,
+        amount: i64,
+        amount_exp: i8,
+        apikey: String,
+        account_title: String,
+        tx_notes: String,
+        tx_time: String
+    } 
+    
     #[derive(FromForm)]
     pub struct DistributionShort {
         account_id: u32,
@@ -169,7 +183,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.11.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.12.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -178,7 +192,7 @@ pub mod routes {
     #[get("/accounts?<apikey>")]
     pub fn get_accounts(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Account>> {
 
-        // We receive apikey as &RawStr.  We must convert it into a form that the mysql paramterization can use.
+        // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -209,7 +223,7 @@ pub mod routes {
 
         let mut v1  = Vec::new();
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -331,7 +345,7 @@ pub mod routes {
     #[get("/currencies?<apikey>")]
     pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        // We receive apikey as &RawStr.  We must convert it into a form that the mysql paramterization can use.
+        // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -366,7 +380,7 @@ pub mod routes {
 
         let mut v1  = Vec::new();
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -443,7 +457,7 @@ pub mod routes {
 
         let mut v1  = Vec::new();
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -491,7 +505,7 @@ pub mod routes {
 
         let mut v1  = Vec::new();
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -539,35 +553,57 @@ pub mod routes {
         }
     } */
 
-    #[get("/distributions?<apikey>&<transaction_id>")]
-    //pub fn get_distributions(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Distribution>> {
-    pub fn get_distributions(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    #[get("/distributions/for_tx?<apikey>&<transaction_id>")]
+    pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
-        let mut v1  = Vec::new();
+        let mut params  = Vec::new(); // parametrization
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
-        v1.push(apikey.html_escape().to_mut().clone());
-        v1.push(transaction_id.html_escape().to_mut().clone());
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        params.push(apikey.html_escape().to_mut().clone());
+        params.push(transaction_id.html_escape().to_mut().clone());
 
-        let vec: Vec<Distribution> =
-            conn.prep_exec("SELECT id, account_id, amount, amount_exp, apikey, transaction_id from distributions where apikey = :apikey and transaction_id = :transaction_id", v1)
-            //conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
+        get_distributions("SELECT d.id as did, t.id as tid, a.id as aid, amount, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and transaction_id = :transaction_id", params, conn)
 
-            .map(|result| { // In this closure we will map `QueryResult` to `Vec<Distribution>`
+    }
+
+    #[get("/distributions/for_account?<apikey>&<account_id>")]
+    pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut params  = Vec::new(); // parametrization
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        params.push(apikey.html_escape().to_mut().clone());
+        params.push(account_id.html_escape().to_mut().clone());
+
+        get_distributions("SELECT d.id as did, t.id as tid, a.id as aid, amount, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and account_id = :account_id", params, conn)
+
+    }
+
+    // This is the core functionality of getting the distributions shared by for_tx and for_account
+    fn get_distributions(query: &str, params: Vec<String>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let vec: Vec<DistributionJoined> =
+            conn.prep_exec(query, params)
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Distribution>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
                     // will map each `MyResult` to contained `row` (no proper error handling)
                     // and second call to `map` will map each `row` to `Payment`
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, account_id, amount, amount_exp, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                        Distribution {
-                            id: id,
-                            account_id: account_id,
+                        let (did, tid, aid, amount, amount_exp, apikey, title, time, notes) = rocket_contrib::databases::mysql::from_row(row);
+                        DistributionJoined {
+                            id: did,
+                            tid: tid,
+                            aid: aid,
                             amount: amount,
                             amount_exp: amount_exp,
                             apikey: apikey,
-                            transaction_id: transaction_id
+                            account_title: title,
+                            tx_notes: notes,
+                            tx_time: time
                         }
+
+
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Distribution>`
                 }).unwrap(); // Unwrap `Vec<Distribution>`
 
@@ -576,6 +612,11 @@ pub mod routes {
             status: Status::Ok,
         }
     }
+
+
+
+
+
 
     #[post("/distributions", data="<distribution>")]
     pub fn post_distribution(distribution: rocket::request::Form<DistributionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
@@ -621,7 +662,7 @@ pub mod routes {
     #[get("/transactions?<apikey>")]
     pub fn get_transactions(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> Json<Vec<Transaction>> {
 
-        // We receive apikey as &RawStr.  We must convert it into a form that the mysql paramterization can use.
+        // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
@@ -651,7 +692,7 @@ pub mod routes {
 
         let mut v1  = Vec::new();
 
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql paramterization can use.
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 

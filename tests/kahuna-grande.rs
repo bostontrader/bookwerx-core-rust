@@ -42,6 +42,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let accounts = mod_accounts::accounts(&client, &apikey, &currencies);
     let transactions = mod_transactions::transactions(&client, &apikey);
     let distributions = mod_distributions::distributions(&client, &apikey, &accounts, &transactions);
+
 }
 
 fn startup() -> Client {
@@ -82,7 +83,8 @@ fn startup() -> Client {
             R::post_currency,
             R::put_currency,
 
-            R::get_distributions,
+            R::get_distributions_for_account,
+            R::get_distributions_for_tx,
             R::post_distribution,
             R::put_distribution,
 
