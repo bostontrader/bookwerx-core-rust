@@ -6,6 +6,7 @@
 mod mod_accounts;
 mod mod_apikey;
 mod mod_currencies;
+mod mod_deletor;
 mod mod_distributions;
 mod mod_transactions;
 
@@ -43,6 +44,9 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let transactions = mod_transactions::transactions(&client, &apikey);
     let distributions = mod_distributions::distributions(&client, &apikey, &accounts, &transactions);
 
+    // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
+    mod_deletor::deletor(&client, &apikey, &accounts, &currencies, &distributions, &transactions);
+
 }
 
 fn startup() -> Client {
@@ -71,6 +75,7 @@ fn startup() -> Client {
         .attach(D::MyRocketSQLConn::fairing())
         .mount("/", routes![
             //R::index,
+            R::delete_account,
             R::get_account,
             R::get_accounts,
             R::post_account,
@@ -78,16 +83,20 @@ fn startup() -> Client {
 
             R::post_apikey,
 
+            R::delete_currency,
             R::get_currencies,
             R::get_currency,
             R::post_currency,
             R::put_currency,
 
+            R::delete_distribution,
+            R::get_distributions,
             R::get_distributions_for_account,
             R::get_distributions_for_tx,
             R::post_distribution,
             R::put_distribution,
 
+            R::delete_transaction,
             R::get_transaction,
             R::get_transactions,
             R::post_transaction,

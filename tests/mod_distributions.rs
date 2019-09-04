@@ -4,7 +4,7 @@ use rocket::http::ContentType;
 use rocket::http::Status;
 
 // These test include testing the correct number of distributions for_account and for_tx
-pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::DistributionJoined> {
+pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
 
     let account_id1: u32 = (*accounts.get(0).unwrap()).id;
     let account_id2: u32 = (*accounts.get(1).unwrap()).id;
@@ -92,5 +92,10 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 1);
 
+    // 7. Retrieve _all_ distributions because we'll need to delete 'em later
+    response = client.get(format!("/distributions?apikey={}", &apikey)).dispatch();
+    let v: Vec<R::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(v.len(), 2);
     v
 }
