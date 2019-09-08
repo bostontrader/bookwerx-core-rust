@@ -56,3 +56,30 @@ CREATE TABLE distributions (
   FOREIGN KEY (transaction_id, apikey) REFERENCES transactions (id, apikey)
 
 );
+
+CREATE TABLE categories (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  symbol VARCHAR(45) NOT NULL,
+  title VARCHAR(45) NOT NULL,
+
+  PRIMARY KEY (id, apikey),
+  UNIQUE KEY (symbol, apikey),
+
+  FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
+);
+
+CREATE TABLE accounts_categories (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  account_id INT UNSIGNED NOT NULL,
+  category_id INT UNSIGNED NOT NULL,
+
+  PRIMARY KEY (id, apikey),
+  UNIQUE KEY (account_id, category_id),
+
+  FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
+  FOREIGN KEY (account_id, apikey) REFERENCES accounts (id, apikey),
+  FOREIGN KEY (category_id, apikey) REFERENCES categories (id, apikey)
+
+);

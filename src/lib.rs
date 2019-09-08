@@ -80,6 +80,21 @@ pub mod routes {
     }
 
     #[derive(Debug, Deserialize, FromForm, Serialize)]
+    pub struct Category {
+        pub id: u32,
+        apikey: String,
+        symbol: String,
+        title: String
+    }
+
+    #[derive(FromForm)]
+    pub struct CategoryShort {
+        apikey: String,
+        symbol: String,
+        title: String,
+    }
+
+    #[derive(Debug, Deserialize, FromForm, Serialize)]
     pub struct Currency {
         pub id: u32,
         apikey: String,
@@ -193,7 +208,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.13.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.14.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -375,6 +390,158 @@ pub mod routes {
         }
     }
 
+
+    #[delete("/category/<id>?<apikey>")]
+    pub fn delete_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut v1  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        v1.push(id.html_escape().to_mut().clone());
+        v1.push(apikey.html_escape().to_mut().clone());
+
+
+        let n = conn.prep_exec("DELETE from categories where id = :id and apikey = :apikey",v1);
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+    }
+
+    #[get("/category/<id>?<apikey>")]
+    pub fn get_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut v1  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        v1.push(id.html_escape().to_mut().clone());
+        v1.push(apikey.html_escape().to_mut().clone());
+
+        let vec: Vec<Category> =
+            // conn.prep_exec("SELECT id, apikey, symbol, title from categories where apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, symbol, title from categories where id = :id and apikey = :apikey", v1)
+
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Category>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                        Category {
+                            id: id,
+                            apikey: apikey,
+                            symbol: symbol,
+                            title: title
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Category>`
+                }).unwrap(); // Unwrap `Vec<Category>`
+
+        if vec.len() == 0 {
+            // If we have zero, return that error.
+            ApiResponse {
+                json: json!({"error":"record not found"}),
+                status: Status::Ok,
+            }
+        } else if vec.len() == 1 {
+            // If we have one, return that
+            ApiResponse {
+                json: json!(vec.get(0)),
+                status: Status::Ok,
+            }
+        }
+        else {
+            // If we have more than one, maxfubar error.
+            ApiResponse {
+                json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
+                status: Status::Ok,
+            }
+        }
+
+
+
+
+    }
+
+    #[get("/categories?<apikey>")]
+    pub fn get_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
+        let mut v1  = Vec::new();
+        v1.push(apikey.html_escape().to_mut().clone());
+
+        let vec: Vec<Category> =
+            conn.prep_exec("SELECT id, apikey, symbol, title from categories where apikey = :apikey", v1)
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Category>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                        Category {
+                            id: id,
+                            apikey: apikey,
+                            symbol: symbol,
+                            title: title
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Category>`
+                }).unwrap(); // Unwrap `Vec<Category>`
+
+        ApiResponse {
+            json: json!(vec),
+            status: Status::Ok,
+        }
+    }
+
+    #[post("/categories", data="<category>")]
+    pub fn post_category(category: rocket::request::Form<CategoryShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("INSERT INTO categories (apikey, symbol, title) VALUES (:apikey, :symbol, :title)",(
+            &category.apikey, &category.symbol, &category.title));
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+    }
+
+    #[put("/categories", data="<category>")]
+    pub fn put_category(category: rocket::request::Form<Category>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("UPDATE categories SET symbol = :symbol, title = :title where id = :id and apikey = :apikey",(
+            &category.symbol, &category.title, &category.id, &category.apikey));
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+    }
 
     #[delete("/currency/<id>?<apikey>")]
     pub fn delete_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
@@ -677,7 +844,7 @@ pub mod routes {
     }
 
     #[get("/distributions/for_account?<apikey>&<account_id>")]
-    pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
         let mut params  = Vec::new(); // parametrization
 
@@ -690,7 +857,7 @@ pub mod routes {
     }
 
     #[get("/distributions/for_tx?<apikey>&<transaction_id>")]
-    pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
         let mut params  = Vec::new(); // parametrization
 
