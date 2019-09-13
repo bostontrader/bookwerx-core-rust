@@ -4,6 +4,7 @@
 #[macro_use] extern crate rocket;
 
 mod mod_accounts;
+mod mod_acctcats;
 mod mod_apikey;
 mod mod_categories;
 mod mod_currencies;
@@ -45,9 +46,10 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let transactions = mod_transactions::transactions(&client, &apikey);
     let distributions = mod_distributions::distributions(&client, &apikey, &accounts, &transactions);
     let categories = mod_categories::categories(&client, &apikey, &accounts);
+    let acctcats = mod_acctcats::acctcats(&client, &apikey, &accounts, &categories);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
-    mod_deletor::deletor(&client, &apikey, &accounts, &currencies, &distributions, &transactions);
+    mod_deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);
 
 }
 
@@ -82,6 +84,12 @@ fn startup() -> Client {
             R::get_accounts,
             R::post_account,
             R::put_account,
+
+            R::delete_acctcat,
+            R::get_acctcat,
+            R::get_acctcats_for_category,
+            R::post_acctcat,
+            R::put_acctcat,
 
             R::post_apikey,
 

@@ -65,6 +65,21 @@ pub mod routes {
         title: String
     }
 
+    #[derive(Deserialize, FromForm, Serialize)]
+    pub struct Acctcat {
+        pub id: u32,
+        apikey: String,
+        account_id: u32,
+        category_id: u32,
+    }
+
+    #[derive(Deserialize, FromForm, Serialize)]
+    pub struct AcctcatShort {
+        apikey: String,
+        account_id: u32,
+        category_id: u32,
+    }
+
     #[derive(Debug, Deserialize)]
     pub struct ApiError {
         pub error: String
@@ -208,7 +223,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.14.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.15.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -363,6 +378,158 @@ pub mod routes {
     }
 
 
+    #[delete("/acctcat/<id>?<apikey>")]
+    pub fn delete_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut v1  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        v1.push(id.html_escape().to_mut().clone());
+        v1.push(apikey.html_escape().to_mut().clone());
+
+        let n = conn.prep_exec("DELETE from accounts_categories where id = :id and apikey = :apikey",v1);
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+    }
+
+    #[get("/acctcat/<id>?<apikey>")]
+    pub fn get_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut v1  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        v1.push(id.html_escape().to_mut().clone());
+        v1.push(apikey.html_escape().to_mut().clone());
+
+        let vec: Vec<Acctcat> =
+            // conn.prep_exec("SELECT id, apikey, symbol, title from acctcats where apikey = :apikey", v1)
+            conn.prep_exec("SELECT id, apikey, account_id, category_id from accounts_categories where id = :id and apikey = :apikey", v1)
+
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Acctcat>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, apikey, account_id, category_id) = rocket_contrib::databases::mysql::from_row(row);
+                        Acctcat {
+                            id: id,
+                            apikey: apikey,
+                            account_id: account_id,
+                            category_id: category_id
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Acctcat>`
+                }).unwrap(); // Unwrap `Vec<Acctcat>`
+
+        if vec.len() == 0 {
+            // If we have zero, return that error.
+            ApiResponse {
+                json: json!({"error":"record not found"}),
+                status: Status::Ok,
+            }
+        } else if vec.len() == 1 {
+            // If we have one, return that
+            ApiResponse {
+                json: json!(vec.get(0)),
+                status: Status::Ok,
+            }
+        }
+        else {
+            // If we have more than one, maxfubar error.
+            ApiResponse {
+                json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
+                status: Status::Ok,
+            }
+        }
+    }
+
+
+    #[get("/acctcats/for_category?<apikey>&<category_id>")]
+    pub fn get_acctcats_for_category(apikey: &RawStr, category_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut params  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        params.push(apikey.html_escape().to_mut().clone());
+        params.push(category_id.html_escape().to_mut().clone());
+
+        let vec: Vec<Acctcat> =
+            conn.prep_exec("SELECT id, apikey, account_id, category_id from accounts_categories where apikey = :apikey and category_id = :category_id", params)
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Acctcat>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (id, apikey, account_id, category_id) = rocket_contrib::databases::mysql::from_row(row);
+                        Acctcat {
+                            id: id,
+                            apikey: apikey,
+                            account_id: account_id,
+                            category_id: category_id
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Acctcat>`
+                }).unwrap(); // Unwrap `Vec<Acctcat>`
+
+        ApiResponse {
+            json: json!(vec),
+            status: Status::Ok,
+        }
+    }
+
+    #[post("/acctcats", data="<acctcat>")]
+    pub fn post_acctcat(acctcat: rocket::request::Form<AcctcatShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("INSERT INTO accounts_categories (apikey, account_id, category_id) VALUES (:apikey, :account_id, :category_id)",(
+            &acctcat.apikey, &acctcat.account_id, &acctcat.category_id));
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+
+    }
+
+    #[put("/acctcats", data="<acctcat>")]
+    pub fn put_acctcat(acctcat: rocket::request::Form<Acctcat>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let n = conn.prep_exec("UPDATE accounts_categories SET account_id = :account_id, category_id = :category_id where id = :id and apikey = :apikey",(
+            &acctcat.account_id, &acctcat.category_id, &acctcat.id, &acctcat.apikey));
+
+        match n {
+            Ok(_result) => ApiResponse {
+                json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
+                status: Status::Ok,
+            },
+            Err(_err) => {
+                ApiResponse {
+                    json: json!({"error": _err.to_string()}),
+                    status: Status::Ok,
+                }
+            }
+        }
+    }
+
+    
+    
     #[post("/apikeys")]
     pub fn post_apikey(mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
@@ -543,6 +710,7 @@ pub mod routes {
         }
     }
 
+    
     #[delete("/currency/<id>?<apikey>")]
     pub fn delete_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
 
