@@ -47,7 +47,7 @@ pub mod routes {
     use rocket::response::{Responder, Response};
     use rocket_contrib::json::{Json, JsonValue};
 
-
+    // PUT needs this.
     #[derive(Deserialize, FromForm, Serialize)]
     pub struct Account {
         pub id: u32,
@@ -57,6 +57,32 @@ pub mod routes {
         title: String
     }
 
+    // Account joined with category and currency. This is an intermediate representation.
+    #[derive(Deserialize, FromForm, Serialize)]
+    pub struct AccountDenormalized {
+        pub id: u32,
+        apikey: String,
+        rarity: u8,
+        title: String,
+        cur_symbol: String,
+        cur_title: String,
+        ac_category_id: u32,
+        cat_symbol: String,
+        cat_title: String
+    }
+
+    // Final form to send as a response.
+    #[derive(Clone, Deserialize, Serialize)]
+    pub struct AccountJoined {
+        pub id: u32,
+        apikey: String,
+        currency: CurrencyShort1,
+        rarity: u8,
+        title: String,
+        categories: Vec<Acctcat2>
+    }
+
+    // POST needs this.
     #[derive(FromForm)]
     pub struct AccountShort {
         apikey: String,
@@ -78,6 +104,11 @@ pub mod routes {
         apikey: String,
         account_id: u32,
         category_id: u32,
+    }
+
+    #[derive(Clone, Deserialize, Serialize)]
+    pub struct Acctcat2 {
+        category_symbol: String
     }
 
     #[derive(Debug, Deserialize)]
@@ -122,6 +153,13 @@ pub mod routes {
     pub struct CurrencyShort {
         apikey: String,
         rarity: u8,
+        symbol: String,
+        title: String,
+    }
+
+    // Need this for the AccountJoined record
+    #[derive(Clone, Deserialize, Serialize)]
+    pub struct CurrencyShort1 {
         symbol: String,
         title: String,
     }
@@ -223,7 +261,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.15.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.16.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -312,27 +350,99 @@ pub mod routes {
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Account> =
-            conn.prep_exec("SELECT id, apikey, currency_id, rarity, title from accounts where apikey = :apikey", v1)
-                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
-                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
-                    // will map each `MyResult` to contained `row` (no proper error handling)
-                    // and second call to `map` will map each `row` to `Payment`
-                    result.map(|x| x.unwrap()).map(|row| {
-                        // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (id, apikey, currency_id, rarity, title) = rocket_contrib::databases::mysql::from_row(row);
-                        Account {
+        let vec: Vec<AccountDenormalized> =
+
+            conn.prep_exec(r#"
+                SELECT
+                    accounts.id as id, accounts.apikey as apikey, accounts.rarity, accounts.title as title,
+                    cur.symbol as cur_symbol, cur.title as cur_title,
+                    ifnull(ac.category_id, 0) as ac_category_id,
+                    ifnull(cat.symbol, '') as cat_symbol,
+                    ifnull(cat.title, '') as cat_title
+
+                FROM accounts LEFT JOIN accounts_categories as ac ON ac.account_id = accounts.id
+                LEFT JOIN currencies as cur ON accounts.currency_id = cur.id
+                LEFT JOIN categories as cat ON ac.category_id = cat.id
+                WHERE accounts.apikey = :apikey
+                    "#, v1 )
+
+            .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
+                // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                // will map each `MyResult` to contained `row` (no proper error handling)
+                // and second call to `map` will map each `row` to `Payment`
+                result.map(|x| x.unwrap()).map(|row| {
+                    // ⚠️ Note that from_row will panic if you don't follow the schema
+                    let (id, apikey, rarity, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title) = rocket_contrib::databases::mysql::from_row(row);
+                    AccountDenormalized {
                             id: id,
                             apikey: apikey,
-                            currency_id: currency_id,
                             rarity: rarity,
-                            title: title
+                            title: title,
+                            cur_symbol: cur_symbol,
+                            cur_title: cur_title,
+                            ac_category_id: ac_category_id,
+                            cat_symbol: cat_symbol,
+                            cat_title: cat_title
                         }
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
                 }).unwrap(); // Unwrap `Vec<Account>`
 
+        // Now we have a de-normalized vector of AccountDenormalized.  Now normalize this for JSON. One Account may have more than one Category and will thus might be repeated.  However, all rows for a particular account are together so the order of the rows will work in the following code.
+        let itr = vec.iter();
+
+        let mut prior_account_id: u32 = 0;
+        let mut act_struct: AccountJoined = AccountJoined {
+            id: 0,
+            apikey: String::from(""),
+            rarity: 0,
+            currency: CurrencyShort1 {symbol: String::from(""), title: String::from("")},
+            title: String::from(""),
+            categories: Vec::new()
+        };
+
+        let mut retVec: Vec<AccountJoined> = Vec::new();
+        let mut atLeastOne: bool = false;
+
+        for val in itr {
+            atLeastOne = true;
+            if val.id == prior_account_id {
+                //    continue same struct, append an acctcat later
+            }
+            else {
+                //    new struct
+                if act_struct.id > 0 {retVec.push(act_struct.clone());}
+
+                let mut cur: CurrencyShort1 = CurrencyShort1 {
+                    symbol: String::from(&val.cur_symbol),
+                    title: String::from(&val.cur_title)
+                };
+
+                prior_account_id = val.id;
+                act_struct = AccountJoined {
+                    id: val.id,
+                    apikey: String::from(&val.apikey),
+                    currency: cur,
+                    rarity: val.rarity,
+                    title: String::from(&val.title),
+                    categories: Vec::new()
+                };
+            }
+
+            // if acctcat then append to val
+            if val.ac_category_id > 0 {
+                let mut n: Acctcat2 = Acctcat2 { category_symbol: String::from(&val.cat_symbol)};
+                act_struct.categories.push(n);
+            }
+
+
+        }
+        if atLeastOne {
+            retVec.push(act_struct.clone());
+        }
+
+
         ApiResponse {
-            json: json!(vec),
+            json: json!(retVec),
             status: Status::Ok,
         }
     }

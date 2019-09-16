@@ -4,7 +4,7 @@ use rocket::http::ContentType;
 use rocket::http::Status;
 
 // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
-pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::Account>, acctcats: &Vec<R::Acctcat>, categories: &Vec<R::Category>, currencies: &Vec<R::Currency>, distributions: &Vec<R::Distribution>, transactions: &Vec<R::Transaction>)  {
+pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined>, acctcats: &Vec<R::Acctcat>, categories: &Vec<R::Category>, currencies: &Vec<R::Currency>, distributions: &Vec<R::Distribution>, transactions: &Vec<R::Transaction>)  {
 
     // 1. First try to delete things that cannot be deleted because of referential integrity constraints.  Watch and laugh as these efforts fail with status 200 and ApiError.
 

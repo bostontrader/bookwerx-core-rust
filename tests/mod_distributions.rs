@@ -4,7 +4,7 @@ use rocket::http::ContentType;
 use rocket::http::Status;
 
 // These test include testing the correct number of distributions for_account and for_tx
-pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::Account>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
+pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined>, transactions: &Vec<R::Transaction>) -> Vec<R::Distribution> {
 
     let account_id1: u32 = (*accounts.get(0).unwrap()).id;
     let account_id2: u32 = (*accounts.get(1).unwrap()).id;

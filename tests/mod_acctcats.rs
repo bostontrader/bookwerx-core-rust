@@ -4,7 +4,7 @@ use rocket::http::ContentType;
 use rocket::http::Status;
 
 // Examine acctcats
-pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<R::Account>, categories: &Vec<R::Category>) -> Vec<R::Acctcat> {
+pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined>, categories: &Vec<R::Category>) -> Vec<R::Acctcat> {
 
     // 1. GET /acctcats. sb 200, empty array
     let mut response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id)).dispatch();

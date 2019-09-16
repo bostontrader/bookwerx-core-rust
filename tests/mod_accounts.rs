@@ -3,11 +3,11 @@ use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
-pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>) -> Vec<R::Account> {
+pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>) -> Vec<R::AccountJoined> {
 
     // 1. GET /accounts. sb 200, empty array
     let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
@@ -47,7 +47,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 3. Now verify that there's a single account
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 1);
 
@@ -81,7 +81,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 6.1 Now verify that there are two accounts
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 2);
