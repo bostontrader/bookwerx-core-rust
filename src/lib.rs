@@ -125,6 +125,14 @@ pub mod routes {
         status: Status,
     }
 
+    #[derive(Serialize)]
+    pub struct BalanceResult {
+        account_id: u32,
+        amount: i64,
+        amount_exp: i8,
+        time: String
+    }
+
     #[derive(Debug, Deserialize, FromForm, Serialize)]
     pub struct Category {
         pub id: u32,
@@ -261,7 +269,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> ApiResponse {
         ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.16.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.17.0".to_string()}),
             status: Status::Ok,
         }
     }
@@ -667,6 +675,50 @@ pub mod routes {
         }
     }
 
+
+    #[get("/balance?<apikey>&<category_id>&<time>")]
+    pub fn get_balance(apikey: &RawStr, category_id: &RawStr, time: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+
+        let mut v1  = Vec::new();
+
+        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+        v1.push(category_id.html_escape().to_mut().clone());
+        v1.push(time.html_escape().to_mut().clone());
+        v1.push(apikey.html_escape().to_mut().clone());
+
+        let vec: Vec<BalanceResult> =
+            conn.prep_exec(r#"
+                SELECT ac.account_id, ds.amount, ds.amount_exp, tx.time
+                FROM accounts_categories AS ac
+                JOIN distributions AS ds ON ds.account_id = ac.account_id
+                JOIN transactions AS tx ON tx.id = ds.transaction_id
+                WHERE ac.category_id = :category_id
+                    AND tx.time <= :time
+                    AND ac.apikey = :apikey
+                    "#, v1 )
+                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
+                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
+                    // will map each `MyResult` to contained `row` (no proper error handling)
+                    // and second call to `map` will map each `row` to `Payment`
+                    result.map(|x| x.unwrap()).map(|row| {
+                        // ⚠️ Note that from_row will panic if you don't follow the schema
+                        let (account_id, amount, amount_exp, time) = rocket_contrib::databases::mysql::from_row(row);
+                        BalanceResult {
+                            account_id: account_id,
+                            amount: amount,
+                            amount_exp: amount_exp,
+                            time: time
+                        }
+                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
+                }).unwrap(); // Unwrap `Vec<Account>`
+
+        // We may have zero or more records to return.
+        ApiResponse {
+            json: json!(vec),
+            status: Status::Ok,
+        }
+
+    }
 
     #[delete("/category/<id>?<apikey>")]
     pub fn delete_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {

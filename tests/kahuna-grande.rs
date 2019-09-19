@@ -6,6 +6,7 @@
 mod mod_accounts;
 mod mod_acctcats;
 mod mod_apikey;
+mod mod_balances;
 mod mod_categories;
 mod mod_currencies;
 mod mod_deletor;
@@ -47,6 +48,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let distributions = mod_distributions::distributions(&client, &apikey, &accounts, &transactions);
     let categories = mod_categories::categories(&client, &apikey, &accounts);
     let acctcats = mod_acctcats::acctcats(&client, &apikey, &accounts, &categories);
+    let balances = mod_balances::balances(&client, &apikey, &categories, &transactions);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
     mod_deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);
@@ -92,6 +94,8 @@ fn startup() -> Client {
             R::put_acctcat,
 
             R::post_apikey,
+
+            R::get_balance,
 
             R::delete_category,
             R::get_category,
