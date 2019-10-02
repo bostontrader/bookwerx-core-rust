@@ -4,40 +4,8 @@
 #[macro_use] extern crate rocket_contrib;
 #[macro_use] extern crate serde;
 
-pub mod constants {
-
-    pub const BIND_IP_KEY_ENV: &str = "BCR_BIND_IP";
-    pub const BIND_IP_KEY_CLI: &str = "bind_ip";
-
-    pub const BIND_PORT_KEY_ENV: &str = "BCR_BIND_PORT";
-    pub const BIND_PORT_KEY_CLI: &str = "bind_port";
-
-    pub const CONN_KEY_ENV: &str = "BCR_CONN";
-    pub const CONN_KEY_CLI: &str = "conn";
-
-    pub const DBNAME_KEY_ENV: &str = "BCR_DBNAME";
-    pub const DBNAME_KEY_CLI: &str = "dbname";
-
-    pub const MODE_KEY_ENV: &str = "BCR_MODE";
-    pub const MODE_KEY_CLI: &str = "mode";
-
-    pub const SEED_KEY_ENV: &str = "BCR_SEED";
-    pub const SEED_KEY_CLI: &str = "seed";
-
-    // We also have some constants solely for testing.
-    pub const TEST_BIND_IP: &str = "0.0.0.0";
-    pub const TEST_BIND_PORT: u16 = 8000;
-    pub const TEST_CONN: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
-    pub const TEST_DBNAME: &str = "bookwerx-core-rust-test";
-}
-
-pub mod db {
-
-    use rocket_contrib::databases::mysql;
-    #[database("mysqldb")]
-    pub struct MyRocketSQLConn(mysql::Conn);
-
-}
+pub mod constants;
+pub mod db;
 
 pub mod routes {
 
@@ -45,218 +13,10 @@ pub mod routes {
     use rocket::request::Request;
     use rocket::response;
     use rocket::response::{Responder, Response};
-    use rocket_contrib::json::{Json, JsonValue};
-
-    // PUT needs this.
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct Account {
-        pub id: u32,
-        apikey: String,
-        currency_id: u32,
-        rarity: u8,
-        title: String
-    }
-
-    // Account joined with category and currency. This is an intermediate representation.
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct AccountDenormalized {
-        pub id: u32,
-        apikey: String,
-        rarity: u8,
-        title: String,
-        cur_symbol: String,
-        cur_title: String,
-        ac_category_id: u32,
-        cat_symbol: String,
-        cat_title: String
-    }
-
-    // Final form to send as a response.
-    #[derive(Clone, Deserialize, Serialize)]
-    pub struct AccountJoined {
-        pub id: u32,
-        apikey: String,
-        currency: CurrencyShort1,
-        rarity: u8,
-        title: String,
-        categories: Vec<Acctcat2>
-    }
-
-    // POST needs this.
-    #[derive(FromForm)]
-    pub struct AccountShort {
-        apikey: String,
-        currency_id: u32,
-        rarity: u8,
-        title: String
-    }
-
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct Acctcat {
-        pub id: u32,
-        apikey: String,
-        account_id: u32,
-        category_id: u32,
-    }
-
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct AcctcatShort {
-        apikey: String,
-        account_id: u32,
-        category_id: u32,
-    }
-
-    #[derive(Clone, Deserialize, Serialize)]
-    pub struct Acctcat2 {
-        category_symbol: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct ApiError {
-        pub error: String
-    }
-
-    #[derive(Deserialize)]
-    pub struct Apikey { pub apikey: String }
-
-    #[derive(Debug)]
-    pub struct ApiResponse {
-        json: JsonValue,
-        status: Status,
-    }
-
-    #[derive(Serialize)]
-    pub struct BalanceResult {
-        account_id: u32,
-        amount: i64,
-        amount_exp: i8,
-        time: String
-    }
-
-    #[derive(Debug, Deserialize, FromForm, Serialize)]
-    pub struct Category {
-        pub id: u32,
-        apikey: String,
-        symbol: String,
-        title: String
-    }
-
-    #[derive(FromForm)]
-    pub struct CategoryShort {
-        apikey: String,
-        symbol: String,
-        title: String,
-    }
-
-    #[derive(Debug, Deserialize, FromForm, Serialize)]
-    pub struct Currency {
-        pub id: u32,
-        apikey: String,
-        rarity: u8,
-        symbol: String,
-        title: String
-    }
-
-    #[derive(FromForm)]
-    pub struct CurrencyShort {
-        apikey: String,
-        rarity: u8,
-        symbol: String,
-        title: String,
-    }
-
-    // Need this for the AccountJoined record
-    #[derive(Clone, Deserialize, Serialize)]
-    pub struct CurrencyShort1 {
-        symbol: String,
-        title: String,
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct DeleteMessage {
-        pub info: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct DeleteSuccess {
-        pub data: DeleteMessage
-    }
-
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct Distribution {
-        pub id: u32,
-        account_id: u32,
-        amount: i64,
-        amount_exp: i8,
-        apikey: String,
-        transaction_id: u32
-    }
-
-    // This struct supports the ability to easily produce a list of distributions for a particular account.
-    #[derive(Deserialize, Serialize)]
-    pub struct DistributionJoined {
-        pub id: u32,
-        tid: u32,
-        aid: u32,
-        amount: i64,
-        amount_exp: i8,
-        apikey: String,
-        account_title: String,
-        tx_notes: String,
-        tx_time: String
-    } 
-    
-    #[derive(FromForm)]
-    pub struct DistributionShort {
-        account_id: u32,
-        amount: i64,
-        amount_exp: i8,
-        apikey: String,
-        transaction_id: u32
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct InsertMessage {
-        pub last_insert_id: u32
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct InsertSuccess {
-        pub data: InsertMessage
-    }
-
-    #[derive(Serialize)]
-    pub struct Ping {
-        ping: String
-    }
-
-    #[derive(Deserialize, FromForm, Serialize)]
-    pub struct Transaction {
-        pub id: u32,
-        apikey: String,
-        notes: String,
-        time: String
-    }
-
-    #[derive(FromForm)]
-    pub struct TransactionShort {
-        apikey: String,
-        notes: String,
-        time: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct UpdateMessage {
-        pub info: String
-    }
-
-    #[derive(Debug, Deserialize)]
-    pub struct UpdateSuccess {
-        pub data: UpdateMessage
-    }
+    use rocket_contrib::json::JsonValue;
 
 
-    impl<'r> Responder<'r> for ApiResponse {
+    impl<'r> Responder<'r> for crate::db::ApiResponse {
         fn respond_to(self, req: &Request) -> response::Result<'r> {
             Response::build_from(self.json.respond_to(&req).unwrap())
                 .status(self.status)
@@ -267,15 +27,15 @@ pub mod routes {
     }
 
     #[get("/")]
-    pub fn index() -> ApiResponse {
-        ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.17.0".to_string()}),
+    pub fn index() -> crate::db::ApiResponse {
+        crate::db::ApiResponse {
+            json: json!({"ping": "bookwerx-core-rust v0.18.0".to_string()}),
             status: Status::Ok,
         }
     }
 
     #[delete("/account/<id>?<apikey>")]
-    pub fn delete_account(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_account(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -286,12 +46,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from accounts where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -300,7 +60,7 @@ pub mod routes {
     }
 
     #[get("/account/<id>?<apikey>")]
-    pub fn get_account(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_account(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -308,7 +68,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Account> =
+        let vec: Vec<crate::db::Account> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from accounts where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, currency_id, rarity, title from accounts where id = :id and apikey = :apikey", v1)
 
@@ -319,7 +79,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, currency_id, rarity, title) = rocket_contrib::databases::mysql::from_row(row);
-                        Account {
+                        crate::db::Account {
                             id: id,
                             apikey: apikey,
                             currency_id: currency_id,
@@ -331,20 +91,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -352,13 +112,13 @@ pub mod routes {
     }
 
     #[get("/accounts?<apikey>")]
-    pub fn get_accounts(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_accounts(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<AccountDenormalized> =
+        let vec: Vec<crate::db::AccountDenormalized> =
 
             conn.prep_exec(r#"
                 SELECT
@@ -381,7 +141,7 @@ pub mod routes {
                 result.map(|x| x.unwrap()).map(|row| {
                     // ⚠️ Note that from_row will panic if you don't follow the schema
                     let (id, apikey, rarity, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title) = rocket_contrib::databases::mysql::from_row(row);
-                    AccountDenormalized {
+                    crate::db::AccountDenormalized {
                             id: id,
                             apikey: apikey,
                             rarity: rarity,
@@ -399,34 +159,34 @@ pub mod routes {
         let itr = vec.iter();
 
         let mut prior_account_id: u32 = 0;
-        let mut act_struct: AccountJoined = AccountJoined {
+        let mut act_struct = crate::db::AccountJoined {
             id: 0,
             apikey: String::from(""),
             rarity: 0,
-            currency: CurrencyShort1 {symbol: String::from(""), title: String::from("")},
+            currency: crate::db::CurrencyShort1 {symbol: String::from(""), title: String::from("")},
             title: String::from(""),
             categories: Vec::new()
         };
 
-        let mut retVec: Vec<AccountJoined> = Vec::new();
-        let mut atLeastOne: bool = false;
+        let mut ret_vec: Vec<crate::db::AccountJoined> = Vec::new();
+        let mut at_least_one: bool = false;
 
         for val in itr {
-            atLeastOne = true;
+            at_least_one = true;
             if val.id == prior_account_id {
                 //    continue same struct, append an acctcat later
             }
             else {
                 //    new struct
-                if act_struct.id > 0 {retVec.push(act_struct.clone());}
+                if act_struct.id > 0 {ret_vec.push(act_struct.clone());}
 
-                let mut cur: CurrencyShort1 = CurrencyShort1 {
+                let cur = crate::db::CurrencyShort1 {
                     symbol: String::from(&val.cur_symbol),
                     title: String::from(&val.cur_title)
                 };
 
                 prior_account_id = val.id;
-                act_struct = AccountJoined {
+                act_struct = crate::db::AccountJoined {
                     id: val.id,
                     apikey: String::from(&val.apikey),
                     currency: cur,
@@ -438,35 +198,35 @@ pub mod routes {
 
             // if acctcat then append to val
             if val.ac_category_id > 0 {
-                let mut n: Acctcat2 = Acctcat2 { category_symbol: String::from(&val.cat_symbol)};
+                let n = crate::db::Acctcat2 { category_symbol: String::from(&val.cat_symbol)};
                 act_struct.categories.push(n);
             }
 
 
         }
-        if atLeastOne {
-            retVec.push(act_struct.clone());
+        if at_least_one {
+            ret_vec.push(act_struct.clone());
         }
 
 
-        ApiResponse {
-            json: json!(retVec),
+        crate::db::ApiResponse {
+            json: json!(ret_vec),
             status: Status::Ok,
         }
     }
 
     #[post("/accounts", data="<account>")]
-    pub fn post_account(account: rocket::request::Form<AccountShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_account(account: rocket::request::Form<crate::db::AccountShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO accounts (apikey, currency_id, rarity, title) VALUES (:apikey, :currency_id, :rarity, :title)",(
             &account.apikey, &account.currency_id, &account.rarity, &account.title));
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -476,18 +236,18 @@ pub mod routes {
     }
 
     #[put("/accounts", data="<account>")]
-    pub fn put_account(account: rocket::request::Form<Account>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_account(account: rocket::request::Form<crate::db::Account>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE accounts SET currency_id = :currency_id, rarity = :rarity, title = :title where id = :id and apikey = :apikey",(
             &account.currency_id, &account.rarity, &account.title, &account.id, &account.apikey));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -497,7 +257,7 @@ pub mod routes {
 
 
     #[delete("/acctcat/<id>?<apikey>")]
-    pub fn delete_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -508,12 +268,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from accounts_categories where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -522,7 +282,7 @@ pub mod routes {
     }
 
     #[get("/acctcat/<id>?<apikey>")]
-    pub fn get_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_acctcat(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -530,7 +290,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Acctcat> =
+        let vec: Vec<crate::db::Acctcat> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from acctcats where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, account_id, category_id from accounts_categories where id = :id and apikey = :apikey", v1)
 
@@ -541,7 +301,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, account_id, category_id) = rocket_contrib::databases::mysql::from_row(row);
-                        Acctcat {
+                        crate::db::Acctcat {
                             id: id,
                             apikey: apikey,
                             account_id: account_id,
@@ -552,20 +312,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -574,7 +334,7 @@ pub mod routes {
 
 
     #[get("/acctcats/for_category?<apikey>&<category_id>")]
-    pub fn get_acctcats_for_category(apikey: &RawStr, category_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_acctcats_for_category(apikey: &RawStr, category_id: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut params  = Vec::new();
 
@@ -582,7 +342,7 @@ pub mod routes {
         params.push(apikey.html_escape().to_mut().clone());
         params.push(category_id.html_escape().to_mut().clone());
 
-        let vec: Vec<Acctcat> =
+        let vec: Vec<crate::db::Acctcat> =
             conn.prep_exec("SELECT id, apikey, account_id, category_id from accounts_categories where apikey = :apikey and category_id = :category_id", params)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Acctcat>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -591,7 +351,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, account_id, category_id) = rocket_contrib::databases::mysql::from_row(row);
-                        Acctcat {
+                        crate::db::Acctcat {
                             id: id,
                             apikey: apikey,
                             account_id: account_id,
@@ -600,24 +360,24 @@ pub mod routes {
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Acctcat>`
                 }).unwrap(); // Unwrap `Vec<Acctcat>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     #[post("/acctcats", data="<acctcat>")]
-    pub fn post_acctcat(acctcat: rocket::request::Form<AcctcatShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_acctcat(acctcat: rocket::request::Form<crate::db::AcctcatShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO accounts_categories (apikey, account_id, category_id) VALUES (:apikey, :account_id, :category_id)",(
             &acctcat.apikey, &acctcat.account_id, &acctcat.category_id));
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -627,18 +387,18 @@ pub mod routes {
     }
 
     #[put("/acctcats", data="<acctcat>")]
-    pub fn put_acctcat(acctcat: rocket::request::Form<Acctcat>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_acctcat(acctcat: rocket::request::Form<crate::db::Acctcat>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE accounts_categories SET account_id = :account_id, category_id = :category_id where id = :id and apikey = :apikey",(
             &acctcat.account_id, &acctcat.category_id, &acctcat.id, &acctcat.apikey));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -649,7 +409,7 @@ pub mod routes {
     
     
     #[post("/apikeys")]
-    pub fn post_apikey(mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_apikey(mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         use rand::{thread_rng, Rng};
         use rand::distributions::Alphanumeric;
@@ -662,12 +422,12 @@ pub mod routes {
         let n = conn.prep_exec(format!("INSERT INTO apikeys (apikey) VALUES ('{}')",rand_string),());
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"apikey": rand_string}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::BadRequest,
                 }
@@ -677,7 +437,7 @@ pub mod routes {
 
 
     #[get("/balance?<apikey>&<category_id>&<time>")]
-    pub fn get_balance(apikey: &RawStr, category_id: &RawStr, time: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_balance(apikey: &RawStr, category_id: &RawStr, time: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -686,7 +446,7 @@ pub mod routes {
         v1.push(time.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<BalanceResult> =
+        let vec: Vec<crate::db::BalanceResult> =
             conn.prep_exec(r#"
                 SELECT ac.account_id, ds.amount, ds.amount_exp, tx.time
                 FROM accounts_categories AS ac
@@ -703,7 +463,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (account_id, amount, amount_exp, time) = rocket_contrib::databases::mysql::from_row(row);
-                        BalanceResult {
+                        crate::db::BalanceResult {
                             account_id: account_id,
                             amount: amount,
                             amount_exp: amount_exp,
@@ -713,7 +473,7 @@ pub mod routes {
                 }).unwrap(); // Unwrap `Vec<Account>`
 
         // We may have zero or more records to return.
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
@@ -721,7 +481,7 @@ pub mod routes {
     }
 
     #[delete("/category/<id>?<apikey>")]
-    pub fn delete_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -733,12 +493,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from categories where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -747,7 +507,7 @@ pub mod routes {
     }
 
     #[get("/category/<id>?<apikey>")]
-    pub fn get_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -755,7 +515,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Category> =
+        let vec: Vec<crate::db::Category> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from categories where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, symbol, title from categories where id = :id and apikey = :apikey", v1)
 
@@ -766,7 +526,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
-                        Category {
+                        crate::db::Category {
                             id: id,
                             apikey: apikey,
                             symbol: symbol,
@@ -777,20 +537,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -802,13 +562,13 @@ pub mod routes {
     }
 
     #[get("/categories?<apikey>")]
-    pub fn get_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Category> =
+        let vec: Vec<crate::db::Category> =
             conn.prep_exec("SELECT id, apikey, symbol, title from categories where apikey = :apikey", v1)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Category>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -817,7 +577,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
-                        Category {
+                        crate::db::Category {
                             id: id,
                             apikey: apikey,
                             symbol: symbol,
@@ -826,25 +586,25 @@ pub mod routes {
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Category>`
                 }).unwrap(); // Unwrap `Vec<Category>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     #[post("/categories", data="<category>")]
-    pub fn post_category(category: rocket::request::Form<CategoryShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_category(category: rocket::request::Form<crate::db::CategoryShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO categories (apikey, symbol, title) VALUES (:apikey, :symbol, :title)",(
             &category.apikey, &category.symbol, &category.title));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -853,18 +613,18 @@ pub mod routes {
     }
 
     #[put("/categories", data="<category>")]
-    pub fn put_category(category: rocket::request::Form<Category>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_category(category: rocket::request::Form<crate::db::Category>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE categories SET symbol = :symbol, title = :title where id = :id and apikey = :apikey",(
             &category.symbol, &category.title, &category.id, &category.apikey));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -874,7 +634,7 @@ pub mod routes {
 
     
     #[delete("/currency/<id>?<apikey>")]
-    pub fn delete_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -886,12 +646,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from currencies where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -900,7 +660,7 @@ pub mod routes {
     }
 
     #[get("/currency/<id>?<apikey>")]
-    pub fn get_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_currency(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -908,7 +668,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Currency> =
+        let vec: Vec<crate::db::Currency> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from currencies where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where id = :id and apikey = :apikey", v1)
 
@@ -919,7 +679,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, rarity, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
-                        Currency {
+                        crate::db::Currency {
                             id: id,
                             apikey: apikey,
                             rarity: rarity,
@@ -931,20 +691,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -956,13 +716,13 @@ pub mod routes {
     }
 
     #[get("/currencies?<apikey>")]
-    pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Currency> =
+        let vec: Vec<crate::db::Currency> =
             conn.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where apikey = :apikey", v1)
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<Currency>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -971,7 +731,7 @@ pub mod routes {
                 result.map(|x| x.unwrap()).map(|row| {
                     // ⚠️ Note that from_row will panic if you don't follow the schema
                     let (id, apikey, rarity, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
-                    Currency {
+                    crate::db::Currency {
                         id: id,
                         apikey: apikey,
                         rarity: rarity,
@@ -981,25 +741,25 @@ pub mod routes {
                 }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Currency>`
             }).unwrap(); // Unwrap `Vec<Currency>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     #[post("/currencies", data="<currency>")]
-    pub fn post_currency(currency: rocket::request::Form<CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_currency(currency: rocket::request::Form<crate::db::CurrencyShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO currencies (apikey, rarity, symbol, title) VALUES (:apikey, :rarity, :symbol, :title)",(
             &currency.apikey, &currency.rarity, &currency.symbol, &currency.title));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1008,18 +768,18 @@ pub mod routes {
     }
 
     #[put("/currencies", data="<currency>")]
-    pub fn put_currency(currency: rocket::request::Form<Currency>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_currency(currency: rocket::request::Form<crate::db::Currency>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE currencies SET rarity = :rarity, symbol = :symbol, title = :title where id = :id and apikey = :apikey",(
             &currency.rarity, &currency.symbol, &currency.title, &currency.id, &currency.apikey));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1029,7 +789,7 @@ pub mod routes {
 
 
     #[delete("/distribution/<id>?<apikey>")]
-    pub fn delete_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -1040,12 +800,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from distributions where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1054,7 +814,7 @@ pub mod routes {
     }
 
     #[get("/distribution/<id>?<apikey>")]
-    pub fn get_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distribution(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -1062,7 +822,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Distribution> =
+        let vec: Vec<crate::db::Distribution> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from distributions where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, account_id, amount, amount_exp, transaction_id from distributions where id = :id and apikey = :apikey", v1)
 
@@ -1073,7 +833,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, account_id, amount, amount_exp, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                        Distribution {
+                        crate::db::Distribution {
                             id: id,
                             apikey: apikey,
                             account_id: account_id,
@@ -1086,20 +846,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -1107,13 +867,13 @@ pub mod routes {
     }
 
     #[get("/distributions?<apikey>")]
-    pub fn get_distributions(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distributions(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Distribution> =
+        let vec: Vec<crate::db::Distribution> =
             conn.prep_exec("SELECT id, account_id, amount, amount_exp, apikey, transaction_id from distributions where apikey = :apikey", v1)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Distribution>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -1122,7 +882,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, account_id, amount, amount_exp, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                        Distribution {
+                        crate::db::Distribution {
                             id: id,
                             account_id: account_id,
                             amount: amount,
@@ -1133,16 +893,16 @@ pub mod routes {
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Distribution>`
                 }).unwrap(); // Unwrap `Vec<Distribution>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     // This is the core functionality of getting the distributions shared by for_tx and for_account
-    fn get_distributions_private(query: &str, params: Vec<String>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    fn get_distributions_private(query: &str, params: Vec<String>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
-        let vec: Vec<DistributionJoined> =
+        let vec: Vec<crate::db::DistributionJoined> =
             conn.prep_exec(query, params)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Distribution>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -1151,7 +911,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (did, tid, aid, amount, amount_exp, apikey, title, time, notes) = rocket_contrib::databases::mysql::from_row(row);
-                        DistributionJoined {
+                        crate::db::DistributionJoined {
                             id: did,
                             tid: tid,
                             aid: aid,
@@ -1167,14 +927,14 @@ pub mod routes {
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Distribution>`
                 }).unwrap(); // Unwrap `Vec<Distribution>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     #[get("/distributions/for_account?<apikey>&<account_id>")]
-    pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut params  = Vec::new(); // parametrization
 
@@ -1187,7 +947,7 @@ pub mod routes {
     }
 
     #[get("/distributions/for_tx?<apikey>&<transaction_id>")]
-    pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut params  = Vec::new(); // parametrization
 
@@ -1200,17 +960,17 @@ pub mod routes {
     }
 
     #[post("/distributions", data="<distribution>")]
-    pub fn post_distribution(distribution: rocket::request::Form<DistributionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_distribution(distribution: rocket::request::Form<crate::db::DistributionShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO distributions (account_id, amount, amount_exp, apikey, transaction_id) VALUES (:account_id, :amount, :amount_exp, :apikey, :transaction_id)",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.apikey, &distribution.transaction_id));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1220,18 +980,18 @@ pub mod routes {
     }
 
     #[put("/distributions", data="<distribution>")]
-    pub fn put_distribution(distribution: rocket::request::Form<Distribution>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_distribution(distribution: rocket::request::Form<crate::db::Distribution>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE distributions SET account_id = :account_id, amount = :amount, amount_exp = :amount_exp, transaction_id = :transaction_id where id = :id and apikey = :apikey",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.transaction_id, &distribution.id, &distribution.apikey));
 
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1241,7 +1001,7 @@ pub mod routes {
 
 
     #[delete("/transaction/<id>?<apikey>")]
-    pub fn delete_transaction(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn delete_transaction(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -1252,12 +1012,12 @@ pub mod routes {
         let n = conn.prep_exec("DELETE from transactions where id = :id and apikey = :apikey",v1);
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1266,7 +1026,7 @@ pub mod routes {
     }
 
     #[get("/transaction/<id>?<apikey>")]
-    pub fn get_transaction(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_transaction(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let mut v1  = Vec::new();
 
@@ -1274,7 +1034,7 @@ pub mod routes {
         v1.push(id.html_escape().to_mut().clone());
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Transaction> =
+        let vec: Vec<crate::db::Transaction> =
             // conn.prep_exec("SELECT id, apikey, symbol, title from transactions where apikey = :apikey", v1)
             conn.prep_exec("SELECT id, apikey, notes, time from transactions where id = :id and apikey = :apikey", v1)
 
@@ -1285,7 +1045,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, notes, time) = rocket_contrib::databases::mysql::from_row(row);
-                        Transaction {
+                        crate::db::Transaction {
                             id: id,
                             apikey: apikey,
                             notes: notes,
@@ -1296,20 +1056,20 @@ pub mod routes {
 
         if vec.len() == 0 {
             // If we have zero, return that error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"record not found"}),
                 status: Status::Ok,
             }
         } else if vec.len() == 1 {
             // If we have one, return that
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!(vec.get(0)),
                 status: Status::Ok,
             }
         }
         else {
             // If we have more than one, maxfubar error.
-            ApiResponse {
+            crate::db::ApiResponse {
                 json: json!({"error":"max fubar error. More than one record found. This does not compute."}),
                 status: Status::Ok,
             }
@@ -1321,13 +1081,13 @@ pub mod routes {
     }
 
     #[get("/transactions?<apikey>")]
-    pub fn get_transactions(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn get_transactions(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
         let mut v1  = Vec::new();
         v1.push(apikey.html_escape().to_mut().clone());
 
-        let vec: Vec<Transaction> =
+        let vec: Vec<crate::db::Transaction> =
             conn.prep_exec("SELECT id, apikey, notes, time from transactions where apikey = :apikey", v1)
                 .map(|result| { // In this closure we will map `QueryResult` to `Vec<Transaction>`
                     // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -1336,7 +1096,7 @@ pub mod routes {
                     result.map(|x| x.unwrap()).map(|row| {
                         // ⚠️ Note that from_row will panic if you don't follow the schema
                         let (id, apikey, notes, time) = rocket_contrib::databases::mysql::from_row(row);
-                        Transaction {
+                        crate::db::Transaction {
                             id: id,
                             apikey: apikey,
                             notes: notes,
@@ -1345,23 +1105,23 @@ pub mod routes {
                     }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Transaction>`
                 }).unwrap(); // Unwrap `Vec<Transaction>`
 
-        ApiResponse {
+        crate::db::ApiResponse {
             json: json!(vec),
             status: Status::Ok,
         }
     }
 
     #[post("/transactions", data="<transaction>")]
-    pub fn post_transaction(transaction: rocket::request::Form<TransactionShort>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn post_transaction(transaction: rocket::request::Form<crate::db::TransactionShort>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("INSERT INTO transactions (apikey, notes, time) VALUES (:apikey, :notes, :time)",(&transaction.apikey, &transaction.notes, &transaction.time));
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"last_insert_id": _result.last_insert_id()}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }
@@ -1371,17 +1131,17 @@ pub mod routes {
     }
 
     #[put("/transactions", data="<transaction>")]
-    pub fn put_transaction(transaction: rocket::request::Form<Transaction>, mut conn: crate::db::MyRocketSQLConn) -> ApiResponse {
+    pub fn put_transaction(transaction: rocket::request::Form<crate::db::Transaction>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
         let n = conn.prep_exec("UPDATE transactions SET notes = :notes, time = :time where id = :id and apikey = :apikey",(&transaction.notes, &transaction.time, &transaction.id, &transaction.apikey));
 
         match n {
-            Ok(_result) => ApiResponse {
+            Ok(_result) => crate::db::ApiResponse {
                 json: json!({"data":{"info": String::from_utf8_lossy(&_result.info())}}),
                 status: Status::Ok,
             },
             Err(_err) => {
-                ApiResponse {
+                crate::db::ApiResponse {
                     json: json!({"error": _err.to_string()}),
                     status: Status::Ok,
                 }

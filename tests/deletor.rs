@@ -1,10 +1,11 @@
-use bookwerx_core_rust::routes as R;
+use bookwerx_core_rust::db as D;
+
 use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
 // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
-pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined>, acctcats: &Vec<R::Acctcat>, categories: &Vec<R::Category>, currencies: &Vec<R::Currency>, distributions: &Vec<R::Distribution>, transactions: &Vec<R::Transaction>)  {
+pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined>, acctcats: &Vec<D::Acctcat>, categories: &Vec<D::Category>, currencies: &Vec<D::Currency>, distributions: &Vec<D::Distribution>, transactions: &Vec<D::Transaction>)  {
 
     // 1. First try to delete things that cannot be deleted because of referential integrity constraints.  Watch and laugh as these efforts fail with status 200 and ApiError.
 
@@ -12,7 +13,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     let mut response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
@@ -20,7 +21,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/category/{}/?apikey={}", (categories.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
@@ -28,7 +29,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
@@ -36,7 +37,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
@@ -49,7 +50,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -57,7 +58,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -68,7 +69,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -76,7 +77,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -87,7 +88,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -95,7 +96,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
     
@@ -106,7 +107,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -114,7 +115,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
     
@@ -125,7 +126,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -133,7 +134,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -144,7 +145,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/category/{}/?apikey={}", (categories.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
 
@@ -152,7 +153,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     response = client.delete(format!("/category/{}/?apikey={}", (categories.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() == 0);
     
@@ -162,42 +163,42 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<R::AccountJoined
     // 3.1 GET /accounts. sb 200, empty array
     response = client.get(format!("/accounts?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<R::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
     // 3.2 GET /acctcats. sb 200, empty array
     response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id))
         .dispatch();
-    let v: Vec<R::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
     // 3.3 GET /categories. sb 200, empty array
     response = client.get(format!("/categories?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<R::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
     // 3.4 GET /currencies. sb 200, empty array
     response = client.get(format!("/currencies?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<R::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
     // 3.5 GET /distributions. sb 200, empty array
     response = client.get(format!("/distributions?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<R::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
     // 3.6 GET /transactions. sb 200, empty array
     response = client.get(format!("/transactions?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<R::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
     

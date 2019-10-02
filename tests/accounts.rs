@@ -1,13 +1,14 @@
-use bookwerx_core_rust::routes as R;
+use bookwerx_core_rust::db as D;
+
 use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
-pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>) -> Vec<R::AccountJoined> {
+pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>) -> Vec<D::AccountJoined> {
 
     // 1. GET /accounts. sb 200, empty array
     let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
@@ -18,7 +19,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
         .body(format!("apikey=notarealkey&currency_id={}&rarity=0&title=cash in mattress", (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
     // {
@@ -30,7 +31,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
         .body(format!("apikey={}&currency_id={}&rarity=0&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let li: R::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
     // {"data":{"last_insert_id":"54"}}
@@ -40,14 +41,14 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
         .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=cash in mattress", apikey, li.data.last_insert_id, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() > 0);
     // {"data":{"info":"(Rows matched: 1  Changed: 0  Warnings: 0"}}
 
     // 3. Now verify that there's a single account
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 1);
 
@@ -56,7 +57,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
         .body(format!("apikey={}&currency_id=666&rarity=0&title=cash in mattress", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
@@ -64,7 +65,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
     response = client.get(format!("/account/{}/?apikey={}", li.data.last_insert_id, apikey))
         .dispatch();
     // The mere fact that this successfully parses an account _is_ the test
-    let c: R::Account = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let _c: D::Account = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
 
 
@@ -73,7 +74,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
         .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: R::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.last_insert_id > 0);
     // {"data":{"last_insert_id":"54"}}
@@ -81,7 +82,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<R::Currency>)
 
     // 6.1 Now verify that there are two accounts
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<R::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
 
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 2);
