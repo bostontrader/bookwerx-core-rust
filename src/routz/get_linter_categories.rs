@@ -12,8 +12,7 @@ pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLCo
 
     let mut v1  = Vec::new();
 
-    // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
-    //v1.push(id.html_escape().to_mut().clone());
+    // We receive this argument as &RawStr.  We must convert it into a form that the mysql parametrization can use.
     v1.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<crate::db::Linter> =
