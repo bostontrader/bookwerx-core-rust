@@ -11,11 +11,13 @@ mod categories;
 mod currencies;
 mod deletor;
 mod distributions;
+mod linter;
 mod transactions;
 
 use bookwerx_core_rust::constants as C;
 use bookwerx_core_rust::db as D;
 use bookwerx_core_rust::routes as R;
+use bookwerx_core_rust::routz as Z;
 
 use rocket::config::{Config, Environment};
 //use rocket::http::ContentType;
@@ -49,6 +51,8 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let categories = categories::categories(&client, &apikey);
     let acctcats = acctcats::acctcats(&client, &apikey, &accounts, &categories);
     let _balances = balances::balances(&client, &apikey, &categories, &transactions);
+
+    linter::linter(&client, &apikey);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
     deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);
@@ -115,6 +119,8 @@ fn startup() -> Client {
             R::get_distributions_for_tx,
             R::post_distribution,
             R::put_distribution,
+
+            Z::get_linter_categories::get_linter_categories,
 
             R::delete_transaction,
             R::get_transaction,

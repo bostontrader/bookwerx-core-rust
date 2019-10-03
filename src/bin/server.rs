@@ -5,6 +5,7 @@
 use bookwerx_core_rust::constants as C;
 use bookwerx_core_rust::db as D;
 use bookwerx_core_rust::routes as R;
+use bookwerx_core_rust::routz as Z;
 
 use clap::clap_app;
 use std::env;
@@ -15,7 +16,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.18.0") // Keep this in sync with TOML
+        (version: "0.19.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -206,6 +207,8 @@ fn main() {
             R::get_distributions_for_tx,
             R::post_distribution,
             R::put_distribution,
+
+            Z::get_linter_categories::get_linter_categories,
 
             R::delete_transaction,
             R::get_transaction,

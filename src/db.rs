@@ -53,14 +53,14 @@ pub struct Acctcat {
     pub id: u32,
     pub apikey: String,
     pub account_id: u32,
-    pub category_id: u32,
+    pub category_id: u32
 }
 
 #[derive(Deserialize, FromForm, Serialize)]
 pub struct AcctcatShort {
     pub apikey: String,
     pub account_id: u32,
-    pub category_id: u32,
+    pub category_id: u32
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -68,7 +68,7 @@ pub struct Acctcat2 {
     pub category_symbol: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct ApiError {
     pub error: String
 }
@@ -79,7 +79,7 @@ pub struct Apikey { pub apikey: String }
 #[derive(Debug)]
 pub struct ApiResponse {
     pub json: JsonValue,
-    pub status: Status,
+    pub status: Status
 }
 
 #[derive(Deserialize, Serialize)]
@@ -90,7 +90,7 @@ pub struct BalanceResult {
     pub time: String
 }
 
-#[derive(Debug, Deserialize, FromForm, Serialize)]
+#[derive(Deserialize, FromForm, Serialize)]
 pub struct Category {
     pub id: u32,
     pub apikey: String,
@@ -102,10 +102,10 @@ pub struct Category {
 pub struct CategoryShort {
     pub apikey: String,
     pub symbol: String,
-    pub title: String,
+    pub title: String
 }
 
-#[derive(Debug, Deserialize, FromForm, Serialize)]
+#[derive(Deserialize, FromForm, Serialize)]
 pub struct Currency {
     pub id: u32,
     pub apikey: String,
@@ -119,22 +119,22 @@ pub struct CurrencyShort {
     pub apikey: String,
     pub rarity: u8,
     pub symbol: String,
-    pub title: String,
+    pub title: String
 }
 
 // Need this for the AccountJoined record
 #[derive(Clone, Deserialize, Serialize)]
 pub struct CurrencyShort1 {
     pub symbol: String,
-    pub title: String,
+    pub title: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct DeleteMessage {
     pub info: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct DeleteSuccess {
     pub data: DeleteMessage
 }
@@ -172,14 +172,22 @@ pub struct DistributionShort {
     pub transaction_id: u32
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct InsertMessage {
     pub last_insert_id: u32
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct InsertSuccess {
     pub data: InsertMessage
+}
+
+// A linter will return a collection of id.
+#[derive(Deserialize, Serialize)]
+pub struct Linter {
+    pub id: u32,
+    pub symbol: String,
+    pub title: String
 }
 
 #[derive(Serialize)]
@@ -202,12 +210,12 @@ pub struct TransactionShort {
     pub time: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct UpdateMessage {
     pub info: String
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct UpdateSuccess {
     pub data: UpdateMessage
 }
