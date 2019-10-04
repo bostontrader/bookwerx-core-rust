@@ -120,6 +120,7 @@ fn startup() -> Client {
             R::post_distribution,
             R::put_distribution,
 
+            Z::get_linter_accounts::get_linter_accounts,
             Z::get_linter_categories::get_linter_categories,
             Z::get_linter_currencies::get_linter_currencies,
 

@@ -81,7 +81,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> crate::db::ApiResponse {
         crate::db::ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.20.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.21.0".to_string()}),
             status: Status::Ok,
         }
     }
