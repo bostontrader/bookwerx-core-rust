@@ -121,6 +121,7 @@ fn startup() -> Client {
             R::put_distribution,
 
             Z::get_linter_categories::get_linter_categories,
+            Z::get_linter_currencies::get_linter_currencies,
 
             R::delete_transaction,
             R::get_transaction,

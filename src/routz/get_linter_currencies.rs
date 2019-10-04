@@ -2,8 +2,8 @@ pub fn add_to_waitlist() {}
 
 use rocket::http::{RawStr, Status};
 
-#[get("/linter/categories?<apikey>")]
-pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
+#[get("/linter/currencies?<apikey>")]
+pub fn get_linter_currencies(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
     let mut v1  = Vec::new();
 
@@ -14,10 +14,10 @@ pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLCo
 
         conn.prep_exec(r#"
             SELECT c.id, c.symbol, c.title
-            FROM categories AS c
-            LEFT JOIN accounts_categories AS ac
-            ON c.id = ac.category_id
-            WHERE c.apikey = :apikey AND ac.category_id IS NULL
+            FROM currencies AS c
+            LEFT JOIN accounts AS ac
+            ON c.id = ac.currency_id
+            WHERE c.apikey = :apikey AND ac.currency_id IS NULL
             "#, v1)
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<Linter>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
