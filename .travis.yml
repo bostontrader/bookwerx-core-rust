@@ -1,7 +1,7 @@
 language: rust
 
 rust:
-  - nightly-2019-07-03
+  - nightly-2020-06-09
 
 env:
   - CODECOV_TOKEN="7743ab68-b2c4-485c-8954-24b8424e7922" RUST_BACKTRACE=1 RUST_TEST_THREADS=1

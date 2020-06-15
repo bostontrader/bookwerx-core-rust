@@ -6,8 +6,6 @@
 
 pub mod constants;
 pub mod db;
-//pub mod routes;
-
 pub mod routz;
 
 pub use crate::routz::get_linter_categories;
@@ -81,7 +79,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> crate::db::ApiResponse {
         crate::db::ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.21.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.22.0".to_string()}),
             status: Status::Ok,
         }
     }

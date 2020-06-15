@@ -2,7 +2,6 @@ use bookwerx_core_rust::constants as C;
 
 use clap::clap_app;
 use std::env;
-use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -11,7 +10,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.21.0") // Keep this in sync with TOML
+        (version: "0.22.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
@@ -96,7 +95,7 @@ fn main() {
         Ok(file) => file,
 
         Err(why) => {
-            println!("Couldn't open [{}]: {}", display, why.description());
+            println!("Couldn't open [{}]: {}", display, why.to_string());
             ::std::process::exit(1);
         },
     };
@@ -141,7 +140,7 @@ fn main() {
         }
         Err(_err) => {
             // How can we test this?
-            println!("couldn't read {}: {}", display, _err.description());
+            println!("couldn't read {}: {}", display, _err.to_string());
             ::std::process::exit(1);
         }
     }

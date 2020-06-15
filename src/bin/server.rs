@@ -16,7 +16,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.21.0") // Keep this in sync with TOML
+        (version: "0.22.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -114,17 +114,17 @@ fn main() {
     }
 
     // 2.5 mode_value.  Must have.
-    let mode_value;
+    //let mode_value;
     match cli_matcher.value_of(C::MODE_KEY_CLI) {
         Some(_result) => {
             println!("Operating in {} mode, as set from the command line.", _result);
-            mode_value = _result.to_string();
+            //mode_value = _result.to_string();
         }
         None =>
             match env::var(C::MODE_KEY_ENV) {
                 Ok(_result) => {
                     println!("Operating in {} mode, as set from the environment.", _result);
-                    mode_value = _result;
+                    //mode_value = _result;
                 }
 
                 Err(_) => {
@@ -174,6 +174,7 @@ fn main() {
 
             R::delete_account,
             R::get_account,
+            Z::get_account_dist_sum::get_account_dist_sum,
             R::get_accounts,
             R::post_account,
             R::put_account,
