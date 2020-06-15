@@ -10,11 +10,6 @@ pub mod routz;
 
 pub use crate::routz::get_linter_categories;
 
-pub fn eat_at_restaurant() {
-    get_linter_categories::add_to_waitlist();
-    get_linter_categories::add_to_waitlist();
-    get_linter_categories::add_to_waitlist();
-}
 
 pub mod routes {
 
@@ -79,7 +74,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> crate::db::ApiResponse {
         crate::db::ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.22.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.23.0".to_string()}),
             status: Status::Ok,
         }
     }
