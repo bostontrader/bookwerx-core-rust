@@ -481,58 +481,6 @@ pub mod routes {
         }
     }
 
-
-    #[get("/balance?<apikey>&<category_id>&<time>")]
-    pub fn get_balance(apikey: &RawStr, category_id: &RawStr, time: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
-
-        // 1. Define some useful structs. These are tedious little things needed only here.
-        #[derive(Deserialize, Serialize)]
-        struct BalanceResult {
-            pub account_id: u32,
-            pub amount: i64,
-            pub amount_exp: i8,
-        }
-
-        let mut v1  = Vec::new();
-
-        // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
-        v1.push(category_id.html_escape().to_mut().clone());
-        v1.push(time.html_escape().to_mut().clone());
-        v1.push(apikey.html_escape().to_mut().clone());
-
-        let vec: Vec<BalanceResult> =
-            conn.prep_exec(r#"
-                SELECT ac.account_id, ds.amount, ds.amount_exp, tx.time
-                FROM accounts_categories AS ac
-                JOIN distributions AS ds ON ds.account_id = ac.account_id
-                JOIN transactions AS tx ON tx.id = ds.transaction_id
-                WHERE ac.category_id = :category_id
-                    AND tx.time <= :time
-                    AND ac.apikey = :apikey
-                    "#, v1 )
-                .map(|result| { // In this closure we will map `QueryResult` to `Vec<Account>`
-                    // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
-                    // will map each `MyResult` to contained `row` (no proper error handling)
-                    // and second call to `map` will map each `row` to `Payment`
-                    result.map(|x| x.unwrap()).map(|row| {
-                        // ⚠️ Note that from_row will panic if you don't follow the schema
-                        let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
-                        BalanceResult {
-                            account_id: account_id,
-                            amount: amount,
-                            amount_exp: amount_exp
-                        }
-                    }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
-                }).unwrap(); // Unwrap `Vec<Account>`
-
-        // We may have zero or more records to return.
-        crate::db::ApiResponse {
-            json: json!(vec),
-            status: Status::Ok,
-        }
-
-    }
-
     #[delete("/category/<id>?<apikey>")]
     pub fn delete_category(id: &RawStr, apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 

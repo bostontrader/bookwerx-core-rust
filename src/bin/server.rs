@@ -187,8 +187,6 @@ fn main() {
 
             R::post_apikey,
 
-            R::get_balance,
-
             R::delete_category,
             R::get_category,
             R::get_categories,

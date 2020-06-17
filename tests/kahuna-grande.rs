@@ -6,7 +6,6 @@
 mod accounts;
 mod acctcats;
 mod apikey;
-mod balances;
 mod categories;
 mod currencies;
 mod deletor;
@@ -50,7 +49,6 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let distributions = distributions::distributions(&client, &apikey, &accounts, &transactions);
     let categories = categories::categories(&client, &apikey);
     let acctcats = acctcats::acctcats(&client, &apikey, &accounts, &categories);
-    let _balances = balances::balances(&client, &apikey, &categories, &transactions);
 
     linter::linter(&client, &apikey);
 
@@ -98,8 +96,6 @@ fn startup() -> Client {
             R::put_acctcat,
 
             R::post_apikey,
-
-            R::get_balance,
 
             R::delete_category,
             R::get_category,
