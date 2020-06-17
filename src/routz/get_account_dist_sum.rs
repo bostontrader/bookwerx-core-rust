@@ -22,6 +22,14 @@ Setting only time_start doesn't seem real useful, but I'm sure somebody can find
 #[get("/account_dist_sum?<apikey>&<account_id>&<time_start>&<time_stop>")]
 pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
+    // 1. Define some useful structs. These are tedious little things needed only here.
+    #[derive(Deserialize, Serialize)]
+    struct BalanceResult {
+        pub account_id: u32,
+        pub amount: i64,
+        pub amount_exp: i8,
+    }
+
     // This is a vector of parameters that we recover from the request and feed into our sql statement
     let mut v1  = Vec::new();
 
@@ -54,17 +62,15 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         }
     }
 
-    let vec: Vec<crate::db::BalanceResult> =
+    let vec: Vec<BalanceResult> =
         conn.prep_exec(format!("
-                SELECT ac.id, ds.amount, ds.amount_exp, tx.time
+                SELECT ac.id, ds.amount, ds.amount_exp
                 FROM accounts AS ac
                 JOIN distributions AS ds ON ds.account_id = ac.id
                 JOIN transactions AS tx ON tx.id = ds.transaction_id
                 WHERE ac.id = :account_id
                     AND ac.apikey = :apikey
                     {}
-                ORDER BY tx.time
-
                     ", time_clause), v1 )
             .map(|result| { // In this closure we will map `QueryResult` to `Vec<BalanceResult>`
                 // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
@@ -72,12 +78,11 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
                 // and second call to `map` will map each `row` to `Payment`
                 result.map(|x| x.unwrap()).map(|row| {
                     // ⚠️ Note that from_row will panic if you don't follow the schema
-                    let (account_id, amount, amount_exp, time) = rocket_contrib::databases::mysql::from_row(row);
-                    crate::db::BalanceResult {
+                    let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
+                    BalanceResult {
                         account_id: account_id,
                         amount: amount,
                         amount_exp: amount_exp,
-                        time: time
                     }
                 }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
             }).unwrap(); // Unwrap `Vec<Account>`

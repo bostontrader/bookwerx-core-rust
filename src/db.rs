@@ -82,14 +82,6 @@ pub struct ApiResponse {
     pub status: Status
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct BalanceResult {
-    pub account_id: u32,
-    pub amount: i64,
-    pub amount_exp: i8,
-    pub time: String
-}
-
 #[derive(Deserialize, FromForm, Serialize)]
 pub struct Category {
     pub id: u32,
