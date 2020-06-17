@@ -1,6 +1,7 @@
 use rocket_contrib::databases::mysql;
 use rocket_contrib::json::JsonValue;
 use rocket::http::Status;
+use serde::{Deserialize, Serialize};
 
 #[database("mysqldb")]
 pub struct MyRocketSQLConn(mysql::Conn);

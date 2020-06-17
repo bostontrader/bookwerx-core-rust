@@ -2,7 +2,6 @@
 
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate rocket_contrib;
-#[macro_use] extern crate serde;
 
 pub mod constants;
 pub mod db;
@@ -75,7 +74,7 @@ pub mod routes {
     #[get("/")]
     pub fn index() -> crate::db::ApiResponse {
         crate::db::ApiResponse {
-            json: json!({"ping": "bookwerx-core-rust v0.24.0".to_string()}),
+            json: json!({"ping": "bookwerx-core-rust v0.24.1".to_string()}),
             status: Status::Ok,
         }
     }

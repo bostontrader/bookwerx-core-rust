@@ -1,3 +1,5 @@
+use serde::Serialize;
+
 #[derive(Serialize, Clone, Copy)]
 pub struct DFP {
     pub amount: i64,
