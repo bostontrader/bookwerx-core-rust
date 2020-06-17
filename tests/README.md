@@ -6,7 +6,7 @@ Run all tests.  This command uses a single thread, thus forcing the tests to run
 
 RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test server_config
 
-This runs just the config.rs test.
+This runs just the server_config.rs test.
 
 Integration tests:
 
@@ -18,7 +18,7 @@ Unfortunately, we can't test these params in isolation.  We want to be able to t
 
 When **bookwerx-core-rust** is executed, it must have access to a MySQL server, even during integration testing.  Please examine .travis.yml to see how we easily we use docker to install and run a MariaDB image that we can subsequently use for testing.
   
-The testing must therefore have _some_ connection string and _some_ database name.  .travis.yml hardwires some of this and the integration tests will also hardwire suitable values to be compatible.  Given this hardwiring, we must therefore be careful to keep these things in sync.  I don't like this hardwiring, but it's not obvious to me how we can DRY this.  IMHO, tolerating this nuisance is simply the best choice.
+The testing must therefore have _some_ connection string and _some_ database name.  The integration tests hardwire suitable values.  Given this hardwiring, we must therefore be careful to keep these things in sync.  I don't like this hardwiring, but it's not obvious to me how we can DRY this.  IMHO, tolerating this nuisance is simply the best choice.
 
 KahunaGrande
 

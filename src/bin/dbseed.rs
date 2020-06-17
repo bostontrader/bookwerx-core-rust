@@ -10,7 +10,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.23.0") // Keep this in sync with TOML
+        (version: "0.24.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
@@ -64,22 +64,23 @@ fn main() {
     }
 
 
-    // 2.3 seed_value.  Must have.
-    let mut seed_value = String::new();
+    // 2.3 See file name (seed_file).  Must have.
+    let seed_file;
     match cli_matcher.value_of(C::SEED_KEY_CLI) {
         Some(_result) => {
             println!("Initializing the db with seed file [{}], as set from the command line.", _result);
-            seed_value = _result.to_string();
+            seed_file = _result.to_string();
         }
         None =>
             match env::var(C::SEED_KEY_ENV) {
                 Ok(_result) => {
                     println!("Initializing the db with seed file [{}], as set from the environment.", _result);
-                    seed_value = _result;
+                    seed_file = _result;
                 }
 
                 Err(_) => {
                     println!("Fatal error: No seed file is available.");
+                    ::std::process::exit(1);
                 }
             }
     }
@@ -87,7 +88,7 @@ fn main() {
 
     // 3. A seed file is available so now try to read it.
     // Create a path to the desired file
-    let path = Path::new(&seed_value);
+    let path = Path::new(&seed_file);
     let display = path.display();
 
     // Open the path in read-only mode.

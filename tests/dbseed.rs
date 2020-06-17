@@ -217,14 +217,14 @@ fn seed_with_nonexistent_seed_file_via_cli() -> Result<(), Box<dyn std::error::E
     cmd.env(C::CONN_KEY_ENV,TEST_CONN_STR)
         .env(C::DBNAME_KEY_ENV,TEST_DBNAME)
 
-        // This is what we're really testing
+         // This is what we're really testing
         .arg(format!("--{}", C::SEED_KEY_CLI))
         .arg("bullshit-seedfile-name");
 
     cmd.assert()
+        .failure()
         .stdout(predicate::str::contains(format!("Initializing the db with seed file [{}], as set from the command line.", "bullshit-seedfile-name")))
-        .stdout(predicate::str::contains(format!("Couldn't open [{}]: entity not found", "bullshit-seedfile-name")))
-        .failure();
+        .stdout(predicate::str::contains(format!("Couldn't open [{}]:", "bullshit-seedfile-name")));
 
     Ok(())
 }
@@ -243,9 +243,9 @@ fn seed_with_invalid_seed_file_via_env() -> Result<(), Box<dyn std::error::Error
         .env(C::SEED_KEY_ENV,INVALID_SEED_FILE);
 
     cmd.assert()
+        .failure()
         .stdout(predicate::str::contains(format!("Initializing the db with seed file [{}], as set from the environment.", INVALID_SEED_FILE)))
-        .stdout(predicate::str::contains(format!("The seed file does not contain valid SQL.")))
-        .failure();
+        .stdout(predicate::str::contains(format!("The seed file does not contain valid SQL.")));
 
     Ok(())
 }
@@ -268,8 +268,8 @@ fn seed_with_valid_seed_file_cli_override_env() -> Result<(), Box<dyn std::error
         .arg(VALID_SEED_FILE);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("The seed has germinated.")))
-        .success();
+        .success()
+        .stdout(predicate::str::contains(format!("The seed has germinated.")));
 
     Ok(())
 }
