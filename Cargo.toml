@@ -14,12 +14,12 @@ rocket = "0.4.5" # 2020-May
 #rocket_cors = "0.5.2" # 2020-Mar
 rocket_cors = { git = "https://github.com/bostontrader/rocket_cors", branch = "downgrade-regex" }
 #rust_decimal = "1.0.1"
-serde = "1.0.112" # 2020-Jun
+serde = {version = "1.0.112", features = ["derive"]} # 2020-Jun
 serde_json = "1.0.55" # 2020-Jun
 
 [dev-dependencies]
-assert_cmd = "0.12.2"
-predicates = "1.0.1"
+assert_cmd = "1.0.1"
+predicates = "1.0.4"
 
 [dependencies.rocket_contrib]
 version = "0.4.5"
