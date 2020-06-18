@@ -22,7 +22,7 @@ impl DFP {
 #[test]
 fn test_dfp() {
 
-    let mut n = DFP{ amount: 1, exp: -1};
+    let mut n;
 
     // 1.
     n = DFP { amount: 1, exp: -1}.add(&DFP { amount: 1, exp: -1});

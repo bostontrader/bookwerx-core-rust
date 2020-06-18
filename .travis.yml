@@ -14,11 +14,8 @@ before_install:
   - docker pull mariadb:10.5.3
   - docker run -d --name mariadb -e MYSQL_ROOT_PASSWORD=supersecretpassword mariadb:10.5.3
   - docker inspect mariadb
-
+  - cargo install tarpaulin
 
 script:
-  - cargo build
-  - cargo test --test server_config
-  - cargo test --test dbseed
-  - cargo test --test kahuna-grande
+  - cargo tarpaulin -v
 

@@ -82,9 +82,11 @@ fn startup() -> Client {
     let rocket = rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
         .mount("/", routes![
-            //R::index,
+            R::index,
+
             R::delete_account,
             R::get_account,
+            Z::get_account_dist_sum::get_account_dist_sum,
             R::get_accounts,
             R::post_account,
             R::put_account,
@@ -100,16 +102,18 @@ fn startup() -> Client {
             R::delete_category,
             R::get_category,
             R::get_categories,
+            Z::get_category_dist_sums::get_category_dist_sums,
             R::post_category,
             R::put_category,
 
             R::delete_currency,
-            R::get_currencies,
             R::get_currency,
+            R::get_currencies,
             R::post_currency,
             R::put_currency,
 
             R::delete_distribution,
+            R::get_distribution,
             R::get_distributions,
             R::get_distributions_for_account,
             R::get_distributions_for_tx,
