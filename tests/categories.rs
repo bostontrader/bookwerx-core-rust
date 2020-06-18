@@ -17,7 +17,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
     // 2.1. But first post using a non-existent apikey. 200 and db error.
     response = client.post("/categories")
-        .body("apikey=notarealkey&symbol=QTL&title=Quatloo")
+        .body("apikey=notarealkey&symbol=A&title=Assets")
         .header(ContentType::Form)
         .dispatch();
     let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -26,7 +26,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
     // 2.2 Successful post. 200  and InsertSuccess
     response = client.post("/categories")
-        .body(format!("apikey={}&symbol=QTL&title=Quatloo", apikey))
+        .body(format!("apikey={}&symbol=A&title=Assets", apikey))
         .header(ContentType::Form)
         .dispatch();
     let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -35,7 +35,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
     // 2.3 Successful put. 200  and UpdateSuccess
     response = client.put("/categories")
-        .body(format!("apikey={}&id={}&symbol=QTL&title=Quatloo", apikey, li.data.last_insert_id))
+        .body(format!("apikey={}&id={}&symbol=A&title=Assets", apikey, li.data.last_insert_id))
         .header(ContentType::Form)
         .dispatch();
     let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -51,7 +51,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
     // 4. Try to post a category with a duplicated symbol. 200 db error.
     response = client.post("/categories")
-        .body(format!("apikey={}&symbol=QTL&title=Quatloo", apikey))
+        .body(format!("apikey={}&symbol=A&title=Assets", apikey))
         .header(ContentType::Form)
         .dispatch();
     let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -67,18 +67,27 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
     // 6. Make a 2nd Successful post. 200.
     response = client.post("/categories")
-        .body(format!("apikey={}&symbol=XAU&title=Quatloo", apikey))
+        .body(format!("apikey={}&symbol=L&title=Liabilities", apikey))
         .header(ContentType::Form)
         .dispatch();
     let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.last_insert_id > 0);
 
-    // 6.1 Verify that there are now two categories
+    // 7. Make a 3rd Successful post. 200.  This category will not be referenced elsewhere and should be caught by the linter.
+    response = client.post("/categories")
+        .body(format!("apikey={}&symbol=Eq&title=Equity", apikey))
+        .header(ContentType::Form)
+        .dispatch();
+    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert!(r.data.last_insert_id > 0);
+
+    // 8. Verify that there are now three categories
     response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();
     let v: Vec<D::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 2);
+    assert_eq!(v.len(), 3);
 
     v
 
