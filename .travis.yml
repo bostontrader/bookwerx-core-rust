@@ -17,5 +17,6 @@ before_install:
   - cargo install cargo-tarpaulin
 
 script:
-  - cargo tarpaulin -v
+  - cargo tarpaulin --out Xml
+  - bash <(curl -s https://codecov.io/bash)
 
