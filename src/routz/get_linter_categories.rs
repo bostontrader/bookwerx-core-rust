@@ -1,5 +1,3 @@
-pub fn add_to_waitlist() {}
-
 use rocket::http::{RawStr, Status};
 
 #[get("/linter/categories?<apikey>")]
