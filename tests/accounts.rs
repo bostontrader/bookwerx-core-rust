@@ -1,9 +1,9 @@
 use bookwerx_core_rust::db as D;
-
 use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
+// Examine accounts
 pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>) -> Vec<D::AccountJoined> {
 
     // 1. GET /accounts. sb 200, empty array
@@ -22,9 +22,6 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
     let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
-    // {
-    //  "error": "MySqlError { ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`bookwerx-core-rust-production`.`currencies`, CONSTRAINT `currencies_ibfk_1` FOREIGN KEY (`apikey`) REFERENCES `apikeys` (`apikey`)) }"
-    //}
 
     // 2.2 Successful post. 200 and InsertSuccess.
     response = client.post("/accounts")
@@ -44,7 +41,6 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
     let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.info.len() > 0);
-    // {"data":{"info":"(Rows matched: 1  Changed: 0  Warnings: 0"}}
 
     // 3. Now verify that there's a single account
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
@@ -68,8 +64,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
     let _c: D::Account = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
 
-
-    // 6. Make the 2nd Successful post. 200.
+    // 6. Make a 2nd Successful post. 200.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
@@ -77,15 +72,21 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
     let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.last_insert_id > 0);
-    // {"data":{"last_insert_id":"54"}}
 
+    // 7. Make a 3rd Successful post. 200.  This account will not be referenced elsewhere and should be caught by the linter.
+    response = client.post("/accounts")
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=boats n hos", apikey, (currencies.get(1).unwrap()).id))
+        .header(ContentType::Form)
+        .dispatch();
+    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert!(r.data.last_insert_id > 0);
 
-    // 6.1 Now verify that there are two accounts
+    // 8. Verify that there are three accounts
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 2);
+    assert_eq!(v.len(), 3);
 
     v
 

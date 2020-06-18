@@ -104,7 +104,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     // 2.4 DELETE accounts.  200 and DeleteSuccess.
 
     // 2.4.1
-    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(1).unwrap()).id, apikey ))
+    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(2).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
     let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -112,6 +112,14 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     assert!(r.data.info.len() == 0);
 
     // 2.4.2
+    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(1).unwrap()).id, apikey ))
+        .header(ContentType::Form)
+        .dispatch();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert!(r.data.info.len() == 0);
+
+    // 2.4.3
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
