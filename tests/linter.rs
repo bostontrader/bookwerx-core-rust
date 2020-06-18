@@ -19,11 +19,11 @@ pub fn linter(client: &Client, apikey: &String)  {
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 1);
 
-    // 3. GET /linter/currencies. sb 200
+    // 3. GET /linter/currencies. sb 200. We should have one unreferenced currency.
     response = client.get(format!("/linter/currencies?apikey={}", &apikey))
         .dispatch();
     let v: Vec<D::Linter> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    assert_eq!(v.len(), 1);
 
 }

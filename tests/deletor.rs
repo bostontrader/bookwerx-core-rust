@@ -123,7 +123,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     // 2.5 DELETE currencies.  200 and DeleteSuccess.
 
     // 2.5.1
-    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(1).unwrap()).id, apikey ))
+    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(2).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
     let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
@@ -131,6 +131,14 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     assert!(r.data.info.len() == 0);
 
     // 2.5.2
+    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(1).unwrap()).id, apikey ))
+        .header(ContentType::Form)
+        .dispatch();
+    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert!(r.data.info.len() == 0);
+
+    // 2.5.3
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();

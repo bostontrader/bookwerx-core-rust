@@ -67,18 +67,27 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
 
     // 6. Make a 2nd Successful post. 200.
     response = client.post("/currencies")
-        .body(format!("apikey={}&rarity=0&symbol=XAU&title=Quatloo", apikey))
+        .body(format!("apikey={}&rarity=0&symbol=XAU&title=Gold", apikey))
         .header(ContentType::Form)
         .dispatch();
     let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(r.data.last_insert_id > 0);
 
-    // 6.1 Verify that there are now two currencies
+    // 7. Make a 3rd Successful post. 200.  This currency will not be referenced elsewhere and should be caught by the linter.
+    response = client.post("/currencies")
+        .body(format!("apikey={}&rarity=0&symbol=GAS&title=General Atomic Shekel", apikey))
+        .header(ContentType::Form)
+        .dispatch();
+    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    assert_eq!(response.status(), Status::Ok);
+    assert!(r.data.last_insert_id > 0);
+
+    // 8. Verify that there are now three currencies
     response = client.get(format!("/currencies?apikey={}", &apikey)).dispatch();
     let v: Vec<D::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 2);
+    assert_eq!(v.len(), 3);
 
     v
 
