@@ -4,6 +4,7 @@
 #[macro_use] extern crate rocket;
 
 mod accounts;
+mod account_dist_sum;
 mod acctcats;
 mod apikey;
 mod categories;
@@ -51,6 +52,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let acctcats = acctcats::acctcats(&client, &apikey, &accounts, &categories);
 
     linter::linter(&client, &apikey);
+    let _ = account_dist_sum::account_dist_sum(&client, &apikey, &accounts);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
     deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);

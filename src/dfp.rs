@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Clone, Copy)]
+#[derive(Deserialize, Serialize, Clone, Copy)]
 pub struct DFP {
     pub amount: i64,
     pub exp: i8

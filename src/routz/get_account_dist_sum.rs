@@ -1,3 +1,4 @@
+use crate::dfp::DFP;
 use rocket::http::{RawStr, Status};
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +24,6 @@ Setting only time_start doesn't seem real useful, but I'm sure somebody can find
 #[get("/account_dist_sum?<apikey>&<account_id>&<time_start>&<time_stop>")]
 pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
 
-    // 1. Define some useful structs. These are tedious little things needed only here.
     #[derive(Deserialize, Serialize)]
     struct BalanceResult {
         pub account_id: u32,
@@ -32,12 +32,12 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
     }
 
     // This is a vector of parameters that we recover from the request and feed into our sql statement
-    let mut v1  = Vec::new();
+    let mut params  = Vec::new();
 
     // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
     // WARNING! Push these in the same order they are used in the prep_exec function!
-    v1.push(account_id.html_escape().to_mut().clone());
-    v1.push(apikey.html_escape().to_mut().clone());
+    params.push(account_id.html_escape().to_mut().clone());
+    params.push(apikey.html_escape().to_mut().clone());
 
     // time_start and time_stop are both optional. This will affect what we push onto the param stack
     // as well as the actual sql statement
@@ -47,17 +47,18 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         None => match time_stop {
             None => { },
             Some(n) => {
-                v1.push(n.html_escape().to_mut().clone());
+                params.push(n.html_escape().to_mut().clone());
                 time_clause = String::from("AND tx.time <= :time_stop");
             }
         }
-        Some(n) => match time_stop {
+        Some(time_start) => match time_stop {
             None =>  {
-                v1.push(n.html_escape().to_mut().clone());
+                params.push(time_start.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time");
             },
-            Some(n) =>  {
-                v1.push(n.html_escape().to_mut().clone());
+            Some(time_stop) =>  {
+                params.push(time_start.html_escape().to_mut().clone());
+                params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time AND tx.time <= :time_stop");
             }
         }
@@ -72,21 +73,17 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
                 WHERE ac.id = :account_id
                     AND ac.apikey = :apikey
                     {}
-                    ", time_clause), v1 )
-            .map(|result| { // In this closure we will map `QueryResult` to `Vec<BalanceResult>`
-                // `QueryResult` is an iterator over `MyResult<row, err>` so first call to `map`
-                // will map each `MyResult` to contained `row` (no proper error handling)
-                // and second call to `map` will map each `row` to `Payment`
+                    ", time_clause), params )
+            .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    // ⚠️ Note that from_row will panic if you don't follow the schema
                     let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
                     BalanceResult {
-                        account_id: account_id,
-                        amount: amount,
-                        amount_exp: amount_exp,
+                        account_id,
+                        amount,
+                        amount_exp,
                     }
-                }).collect() // Collect payments so now `QueryResult` is mapped to `Vec<Account>`
-            }).unwrap(); // Unwrap `Vec<Account>`
+                }).collect()
+            }).unwrap();
 
 
     // We now have zero or more records to sum.
@@ -99,27 +96,6 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
     crate::db::ApiResponse {
         json: json!({"sum": sum}),
         status: Status::Ok,
-    }
-
-}
-
-#[derive(Serialize)]
-struct DFP {
-    amount: i64,
-    exp: i8,
-}
-
-impl DFP {
-    fn add(&self, n2: &DFP) -> DFP {
-        let d = self.exp - n2.exp;
-        if d >= 1 {
-            return n2.add(&DFP { amount: self.amount * 10, exp: self.exp - 1 })
-        } else if d == 0 {
-            return DFP { amount: self.amount + n2.amount, exp: self.exp }
-        } else {
-            return n2.add(self)
-        }
-
     }
 
 }
