@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 /*
-Given a category_id, find all the distributions related to all accounts tagged as that category, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sum will be expressed using a decimal floating point format.
+Given a category_id, find all the distributions related to all accounts tagged as that category, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sums will be expressed using a decimal floating point format.
 
 Given an optional boolean decorate param, return extra decorative related fields such as account title and currency symbol.
 
@@ -61,7 +61,6 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
         symbol: String,
     }
 
-
     #[derive(Clone, Copy, Serialize)]
     struct AcctSum {
         account_id: u32,
@@ -82,18 +81,19 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     match time_start {
         None => match time_stop {
             None => { },
-            Some(n) => {
-                params.push(n.html_escape().to_mut().clone());
+            Some(time_stop) => {
+                params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND tx.time <= :time_stop");
             }
         }
-        Some(n) => match time_stop {
+        Some(time_start) => match time_stop {
             None =>  {
-                params.push(n.html_escape().to_mut().clone());
+                params.push(time_start.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time");
             },
-            Some(n) =>  {
-                params.push(n.html_escape().to_mut().clone());
+            Some(time_stop) =>  {
+                params.push(time_start.html_escape().to_mut().clone());
+                params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time AND tx.time <= :time_stop");
             }
         }
@@ -131,13 +131,14 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     // 4.1 If we only have zero records, we can return an empty, undecorated result now.
     if vec.len() == 0 {
         return crate::db::ApiResponse {
-            json: json!({"sums": "[]"}),
+            json: json!({"sums": []}),
             status: Status::Ok,
         };
     }
 
     // 4.2 At this point we know we must have more than zero records to work with.
     // Now compute the actual sum of distributions for each particular account_id, and store the results in a HashMap.
+    // We use a HashMap because we'll soon need easy access to these values, given a key.
     let mut hm = HashMap::new();
 
     // 4.3 If we have requested decorations we will eventually need an "in clause" of account ids to work with.  It's tempting to build that into this loop now.  Resist the urge.  Doing so makes this needlessly complicated.  It's simple and fast enough to build the in_clause separately.
@@ -145,6 +146,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     let mut prior_account_id = 0;
     for v in vec {
         if v.account_id != prior_account_id {
+            // This is the first record of a new account_id
             if prior_account_id == 0 {
                 // This is the very first time in the loop. Nothing to do yet.
             } else {
@@ -152,34 +154,45 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
                 hm.insert(v.account_id, AcctSum { account_id: prior_account_id, sum });
             }
             prior_account_id = v.account_id;
-            sum = DFP { amount: 0, exp: 0 };
+            sum = DFP { amount: v.amount, exp: v.amount_exp };
         }
+        // This records account_id is the same as the prior record, so just add the values
         sum = sum.add(&DFP { amount: v.amount, exp: v.amount_exp });
     }
+
     // 4.3.1 The above loop should have executed at least once so we should have a real v and sum.
-    // When the iteration is done, we still need to insert the final v and sum into the HashMap.
+    // Now that the iteration is done, we still need to insert the final v and sum into the HashMap.
     hm.insert(prior_account_id, AcctSum{ account_id: prior_account_id, sum});
 
+    // 5. We will soon need this.  Is there an easier way to do this?
+    fn to_vec(hm :HashMap<u32, AcctSum>) -> Vec<AcctSum> {
+        let mut ret_val:Vec<AcctSum> = Vec::new();
 
-    // 5.
+        for (_k, v) in hm {
+            ret_val.push(v);
+        }
+        return ret_val;
+    }
+
+    // 6.  Did the caller request decorations?
     match decorate {
         None => {
-            // 5.1 If we have not requested the decorations we can return the HashMap as the response now.
+            // 6.1 If we have not requested the decorations we can return the HashMap as a Vector as the response now.
             return crate::db::ApiResponse {
-                json: json!({"sums": hm}),
+                json: json!({"sums": to_vec(hm)}),
                 status: Status::Ok,
             };
         },
         Some(braw) => {
-            // 5.2 There is something passed as the decorate parameter.  Can we parse this to a bool?
+            // 6.2 There is something passed as the decorate parameter.  Can we parse this to a bool?
             match braw.html_escape().to_mut().clone().parse() {
                 Ok(b) => {
                     if b {
-                        // decorate parsed to true.  Fall through and continue.
+                        // decorate parsed to true.  Fall through and continue with decorations.
                     } else {
                         // decorate parsed to an explicit false.  No decorations, just the HashMap.
                         return crate::db::ApiResponse {
-                            json: json!({"sums": hm}),
+                            json: json!({"sums": to_vec(hm)}),
                             status: Status::Ok,
                         };
                     }
@@ -195,9 +208,9 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
         }
     }
 
-    // 6. At this point we know that we have info to return and we know that the caller has requested decorations.  So now build and execute a 2nd SQL query to retrieve the related decorative items.
+    // 7. At this point we know that we have info to return and we know that the caller has requested decorations.  So now build and execute a 2nd SQL query to retrieve the related decorative items.
 
-    // 6.1 First build an "in clause" containing a list of relevant account_id.
+    // 7.1 First build an "in clause" containing a list of relevant account_id.
     let mut in_clause = String::new();
     in_clause.push_str("(");
     let mut first_time = true;
@@ -212,7 +225,8 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     in_clause.push_str(")");
 
 
-    // 6.2 Now build and execute the SQL to get the decorations
+    // 7.2 Now build and execute the SQL to get the decorations.
+    // WARNING! The two queries are not atomic.  Contemplate what errors might arise because of this.
     params  = Vec::new();
     params.push(apikey.html_escape().to_mut().clone());
     let vec: Vec<Decorations> =
@@ -221,7 +235,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
             FROM accounts AS ac
             JOIN currencies AS cu ON ac.currency_id = cu.id
             WHERE ac.apikey = :apikey
-            AND ac.id IN ({})
+            AND ac.id IN {}
         ", in_clause), params )
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
@@ -235,7 +249,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
                 }).collect()
             }).unwrap();
 
-    // 6.3 Now iterate over all of the Decorations, if any and build the final result.
+    // 7.3 Now iterate over all of the Decorations, if any and build the final result.
     let mut ret_val = Vec::new();
     for d in vec {
             match hm.get(&d.account_id) {

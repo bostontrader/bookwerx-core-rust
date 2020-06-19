@@ -8,6 +8,7 @@ mod account_dist_sum;
 mod acctcats;
 mod apikey;
 mod categories;
+mod category_dist_sums;
 mod currencies;
 mod deletor;
 mod distributions;
@@ -53,6 +54,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
 
     linter::linter(&client, &apikey);
     let _ = account_dist_sum::account_dist_sum(&client, &apikey, &accounts);
+    let _ = category_dist_sums::category_dist_sums(&client, &apikey, &categories);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
     deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);
