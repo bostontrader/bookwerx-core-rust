@@ -1,6 +1,5 @@
 use crate::dfp::DFP;
 use rocket::http::{RawStr, Status};
-use serde::{Deserialize, Serialize};
 
 /*
 Given an account_id, find all the distributions related to it, optionally filtered by time, and calculate and return their sum. Recall that the returned sum will be expressed using a decimal floating point format.
@@ -23,13 +22,6 @@ Setting only time_start doesn't seem real useful, but I'm sure somebody can find
  */
 #[get("/account_dist_sum?<apikey>&<account_id>&<time_start>&<time_stop>")]
 pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
-
-    #[derive(Deserialize, Serialize)]
-    struct BalanceResult {
-        pub account_id: u32,
-        pub amount: i64,
-        pub amount_exp: i8,
-    }
 
     // This is a vector of parameters that we recover from the request and feed into our sql statement
     let mut params  = Vec::new();
@@ -64,7 +56,7 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         }
     }
 
-    let vec: Vec<BalanceResult> =
+    let vec: Vec<crate::db::BalanceResult> =
         conn.prep_exec(format!("
                 SELECT ac.id, ds.amount, ds.amount_exp
                 FROM accounts AS ac
@@ -77,7 +69,7 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
                     let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
-                    BalanceResult {
+                    crate::db::BalanceResult {
                         account_id,
                         amount,
                         amount_exp,
