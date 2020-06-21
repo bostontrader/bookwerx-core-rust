@@ -1,7 +1,6 @@
 use bookwerx_core_rust::db as D;
 use rocket::local::Client;
 use rocket::http::Status;
-use serde::Deserialize;
 
 pub fn linter(client: &Client, apikey: &String)  {
 

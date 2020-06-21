@@ -46,7 +46,7 @@ git clone https://github.com/bostontrader/bookwerx-core-rust.git
 cd bookwerx-core-rust
 cargo build
 cargo run --bin dbseed -- --help
-cargo run --bin bookwerx-core-rust -- --help
+cargo run --bin server -- --help
 ```
 Note the syntax for the *cargo run* commands.  This executes the command and feeds the command-line arg '--help' to it.  Whereupon you can further dissect the operation.
 

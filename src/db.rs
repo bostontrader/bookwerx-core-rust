@@ -64,6 +64,11 @@ pub struct AccountShort {
     pub title: String
 }
 
+pub struct AccountShort1 {
+    pub currency_id: u32,
+    pub title: String
+}
+
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /acctcats.
 #[derive(Serialize)]   // We send these as a json result.
@@ -141,6 +146,12 @@ pub struct CurrencyShort {
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
 pub struct CurrencyShort1 {
+    pub symbol: String,
+    pub title: String
+}
+
+pub struct CurrencyShort2 {
+    pub id: u32,
     pub symbol: String,
     pub title: String
 }

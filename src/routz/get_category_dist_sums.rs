@@ -109,11 +109,12 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
             if prior_account_id == 0 {
                 // This is the very first time in the loop. Nothing to do yet.
             } else {
-                // This is the first element that has a new account_id
-                hm.insert(v.account_id, crate::db::AcctSum { account_id: prior_account_id, sum });
+                // This is the first element that has a new account_id. Save the sum from the prior account_id
+                hm.insert(prior_account_id, crate::db::AcctSum { account_id: prior_account_id, sum });
             }
             prior_account_id = v.account_id;
-            sum = DFP { amount: v.amount, exp: v.amount_exp };
+            //sum = DFP { amount: v.amount, exp: v.amount_exp };
+            sum = DFP { amount: 0, exp: 0 };
         }
         // This records account_id is the same as the prior record, so just add the values
         sum = sum.add(&DFP { amount: v.amount, exp: v.amount_exp });
