@@ -23,7 +23,7 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
-    // 2.2 Successful post. 200  and InsertSuccess
+    // 2.2 Successful post. 200  and InsertMessage
     response = client.post("/acctcats")
         .body(
             format!("apikey={}&account_id={}&category_id={}"
@@ -33,7 +33,7 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
             ))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
@@ -91,7 +91,7 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
             ))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 

@@ -37,12 +37,12 @@ pub fn transactions(client: &Client, apikey: &String) -> Vec<D::Transaction> {
     assert!(r.error.len() > 0);
 
 
-    // 2.2 Successful post. 200 and InsertSuccess.
+    // 2.2 Successful post. 200 and InsertMessage.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=notes&time=2020", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
@@ -76,18 +76,18 @@ pub fn transactions(client: &Client, apikey: &String) -> Vec<D::Transaction> {
         .body(format!("apikey={}&notes=notes&time=2020-12", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 7. Make the 3rd Successful post. 200.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=notes&time=2020-12-31", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 8. Now verify that there are three transactions
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();

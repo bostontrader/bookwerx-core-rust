@@ -23,15 +23,14 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
-    // 2.2 Successful post. 200 and InsertSuccess.
+    // 2.2 Successful post. 200 and InsertMessage.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
-    // {"data":{"last_insert_id":"54"}}
 
     // 2.3 Successful put. 200  and UpdateSuccess
     response = client.put("/accounts")
@@ -69,18 +68,18 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
         .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 7. Make a 3rd Successful post. 200.  This account will not be referenced elsewhere and should be caught by the linter.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=boats n hos", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 8. Verify that there are three accounts
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();

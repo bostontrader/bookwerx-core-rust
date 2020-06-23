@@ -24,12 +24,12 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
-    // 2.2 Successful post. 200  and InsertSuccess
+    // 2.2 Successful post. 200  and InsertMessage
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=A&title=Assets", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
@@ -70,18 +70,18 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         .body(format!("apikey={}&symbol=L&title=Liabilities", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 7. Make a 3rd Successful post. 200.  This category will not be referenced elsewhere and should be caught by the linter.
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=Eq&title=Equity", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.last_insert_id > 0);
+    assert!(li.data.last_insert_id > 0);
 
     // 8. Verify that there are now three categories
     response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();

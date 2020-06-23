@@ -110,11 +110,11 @@ fn startup() -> Client {
             R::post_category,
             R::put_category,
 
-            R::delete_currency,
-            R::get_currency,
-            R::get_currencies,
-            R::post_currency,
-            R::put_currency,
+            Z::currency::delete_currency,
+            Z::currency::get_currency,
+            Z::currency::get_currencies,
+            Z::currency::post_currency,
+            Z::currency::put_currency,
 
             R::delete_distribution,
             R::get_distribution,

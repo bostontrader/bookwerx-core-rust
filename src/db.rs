@@ -1,7 +1,10 @@
 use crate::dfp::DFP;
+use rocket::http::Status;
+use rocket::request::FromForm;
+use rocket::response::Responder;
+use rocket_contrib::database;
 use rocket_contrib::databases::mysql;
 use rocket_contrib::json::JsonValue;
-use rocket::http::Status;
 use serde::{Deserialize, Serialize};
 
 #[database("mysqldb")]
@@ -19,6 +22,8 @@ What we have here now is my one-time pass over all of this to cleanup whatever c
 
 many derives.
  */
+
+// 1. The basic data formats.
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /accounts.
 #[derive(Serialize)]   // We send these as a json result.
@@ -94,17 +99,7 @@ pub struct Acctcat2 {
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-pub struct ApiError {
-    pub error: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
 pub struct Apikey { pub apikey: String }
-
-pub struct ApiResponse {
-    pub json: JsonValue,
-    pub status: Status
-}
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /categories.
@@ -123,6 +118,7 @@ pub struct CategoryShort {
     pub title: String
 }
 
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /currencies.
 #[derive(Serialize)]   // We send these as a json result.
@@ -154,16 +150,6 @@ pub struct CurrencyShort2 {
     pub id: u32,
     pub symbol: String,
     pub title: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct DeleteMessage {
-    pub info: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct DeleteSuccess {
-    pub data: DeleteMessage
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
@@ -200,16 +186,6 @@ pub struct DistributionShort {
     pub amount_exp: i8,
     pub apikey: String,
     pub transaction_id: u32
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct InsertMessage {
-    pub last_insert_id: u32
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct InsertSuccess {
-    pub data: InsertMessage
 }
 
 // A linter will return a collection of id.
@@ -250,18 +226,8 @@ pub struct TransactionShort {
     pub time: String
 }
 
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct UpdateMessage {
-    pub info: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct UpdateSuccess {
-    pub data: UpdateMessage
-}
-
 /*
-account_dist_sum and category_dist_sums produce a variety of outputs related to the sum of all distributions for accounts, as well as optional decorations.
+2. account_dist_sum and category_dist_sums produce a variety of outputs related to the sum of all distributions for accounts, as well as optional decorations.
  */
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
@@ -319,4 +285,68 @@ pub struct Sums {
 #[derive(Deserialize)] // A test parses a response into this struct.
 pub struct SumsDecorated {
     pub sums: Vec<BalanceResultDecorated>
+}
+
+// 3. The response types
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum APIResponse {
+    Info(String),
+    LastInsertId(u64),
+    Error(String)
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum GetCurrencyResponse {
+    One(Currency),
+    Many(Vec<Currency>),
+    Error(String)
+}
+
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Responder)]
+#[derive(Serialize)]   // We send these as a json result.
+pub struct ApiError {
+    pub error: String
+}
+
+//pub struct ApiResponse {
+    //pub json: JsonValue,
+//}
+
+pub struct ApiResponseOld {
+    pub json: JsonValue,
+    pub status: Status
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct DeleteMessage {
+    pub info: String
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct DeleteSuccess {
+    pub data: DeleteMessage
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct InsertMessage {
+    pub last_insert_id: u32
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct InsertSuccess {
+    pub data: InsertMessage
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct UpdateMessage {
+    pub info: String
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+pub struct UpdateSuccess {
+    pub data: UpdateMessage
 }

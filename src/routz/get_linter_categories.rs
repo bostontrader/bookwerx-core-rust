@@ -1,7 +1,9 @@
+use rocket::get;
 use rocket::http::{RawStr, Status};
+use rocket_contrib::json;
 
 #[get("/linter/categories?<apikey>")]
-pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
+pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponseOld {
 
     let mut params  = Vec::new();
 
@@ -28,7 +30,7 @@ pub fn get_linter_categories(apikey: &RawStr, mut conn: crate::db::MyRocketSQLCo
                 }).collect()
             }).unwrap();
 
-    crate::db::ApiResponse {
+    crate::db::ApiResponseOld {
         json: json!(vec),
         status: Status::Ok,
     }

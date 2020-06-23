@@ -38,12 +38,12 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     assert_eq!(response.status(), Status::Ok);
     assert!(r.error.len() > 0);
 
-    // 2.2 Successful post. 200 and InsertSuccess.
+    // 2.2 Successful post. 200 and InsertMessage.
     response = client.post("/distributions")
         .body(format!("&apikey={}&transaction_id={}&account_id={}&amount=3&amount_exp=0", apikey, transaction_id1, account_id1))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
@@ -74,12 +74,12 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     // 5. Now submit a single GET of the prior POST. 200 and distribution.
     // Don't do this.  Nobody cares.
 
-    // 6. Make the 2nd Successful post. 200 and InsertSuccess
+    // 6. Make the 2nd Successful post. 200 and InsertMessage
     response = client.post("/distributions")
         .body(format!("&apikey={}&transaction_id={}&account_id={}&amount=-3&amount_exp=0", apikey, transaction_id1, account_id2))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
@@ -96,21 +96,21 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
 
     // 7. Post two more distributions to two different transactions so that we can test account_dist_sum and category_dist_sums.
 
-    // 7.1 Successful post. 200 and InsertSuccess.
+    // 7.1 Successful post. 200 and InsertMessage.
     response = client.post("/distributions")
         .body(format!("&apikey={}&transaction_id={}&account_id={}&amount=4&amount_exp=0", apikey, transaction_id2, account_id1))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 
-    // 7.2 Successful post. 200 and InsertSuccess.
+    // 7.2 Successful post. 200 and InsertMessage.
     response = client.post("/distributions")
         .body(format!("&apikey={}&transaction_id={}&account_id={}&amount=5&amount_exp=0", apikey, transaction_id3, account_id1))
         .header(ContentType::Form)
         .dispatch();
-    let li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert!(li.data.last_insert_id > 0);
 

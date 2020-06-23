@@ -1,5 +1,7 @@
 use crate::dfp::DFP;
+use rocket::get;
 use rocket::http::{RawStr, Status};
+use rocket_contrib::json;
 use std::collections::HashMap;
 
 /*
@@ -24,7 +26,7 @@ Setting both time_* params gives us the change in balance during a time period a
 Setting only time_start doesn't seem real useful, but I'm sure somebody can find a need for doing this.
  */
 #[get("/category_dist_sums?<apikey>&<category_id>&<time_start>&<time_stop>&<decorate>")]
-pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, decorate: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
+pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, decorate: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponseOld {
 
     // 1. Build a vector of sanitized incoming request parameters. We will feed this to the SQL query. While we're here, let's also use this opportunity to build a time filtering clause for the SQL query.
     let mut params  = Vec::new();
@@ -89,7 +91,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
 
     // 3.1 If we only have zero records, we can return an empty, undecorated result now.
     if vec.len() == 0 {
-        return crate::db::ApiResponse {
+        return crate::db::ApiResponseOld {
             json: json!({"sums": []}),
             status: Status::Ok,
         };
@@ -138,7 +140,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     match decorate {
         None => {
             // 5.1 If we have not requested the decorations we can return the HashMap as a Vector as the response now.
-            return crate::db::ApiResponse {
+            return crate::db::ApiResponseOld {
                 json: json!({"sums": to_vec(hm)}),
                 status: Status::Ok,
             };
@@ -151,7 +153,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
                         // decorate parsed to true.  Fall through and continue with decorations.
                     } else {
                         // decorate parsed to an explicit false.  No decorations, just the HashMap.
-                        return crate::db::ApiResponse {
+                        return crate::db::ApiResponseOld {
                             json: json!({"sums": to_vec(hm)}),
                             status: Status::Ok,
                         };
@@ -159,7 +161,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
                 },
                 Err(e) => {
                     // Cannot parse to a bool.
-                    return crate::db::ApiResponse {
+                    return crate::db::ApiResponseOld {
                         json: json!({"error": e.to_string()}),
                         status: Status::Ok,
                     };
@@ -234,7 +236,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
             }
         }
 
-        return crate::db::ApiResponse {
+        return crate::db::ApiResponseOld {
             json: json!({"sums": ret_val}),
             status: Status::Ok,
         }

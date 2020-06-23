@@ -29,9 +29,11 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 1.4 Try to DELETE transaction 0.
     response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(0).unwrap()).id, apikey ))
@@ -156,25 +158,31 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(2).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.5.2
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.5.3
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
 
     // 2.6 DELETE categories.  200 and DeleteSuccess.
@@ -230,9 +238,11 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     // 3.4 GET /currencies. sb 200, empty array
     response = client.get(format!("/currencies?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<D::Currency> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCurrencyResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 3.5 GET /distributions. sb 200, empty array
     response = client.get(format!("/distributions?apikey={}", &apikey))

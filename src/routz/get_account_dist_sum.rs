@@ -1,5 +1,7 @@
 use crate::dfp::DFP;
+use rocket::get;
 use rocket::http::{RawStr, Status};
+use rocket_contrib::json;
 
 /*
 Given an account_id, find all the distributions related to it, optionally filtered by time, and calculate and return their sum. Recall that the returned sum will be expressed using a decimal floating point format.
@@ -21,7 +23,7 @@ Setting both time_* params gives us the change in balance during a time period a
 Setting only time_start doesn't seem real useful, but I'm sure somebody can find a need for doing this.
  */
 #[get("/account_dist_sum?<apikey>&<account_id>&<time_start>&<time_stop>")]
-pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponse {
+pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponseOld {
 
     // This is a vector of parameters that we recover from the request and feed into our sql statement
     let mut params  = Vec::new();
@@ -85,7 +87,7 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
     }
 
     // Now build and return the http response.
-    crate::db::ApiResponse {
+    crate::db::ApiResponseOld {
         json: json!({"sum": sum}),
         status: Status::Ok,
     }
