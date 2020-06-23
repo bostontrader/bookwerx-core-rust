@@ -88,12 +88,12 @@ fn startup() -> Client {
         .mount("/", routes![
             R::index,
 
-            R::delete_account,
-            R::get_account,
+            Z::account::delete_account,
+            Z::account::get_account,
             Z::get_account_dist_sum::get_account_dist_sum,
-            R::get_accounts,
-            R::post_account,
-            R::put_account,
+            Z::account::get_accounts,
+            Z::account::post_account,
+            Z::account::put_account,
 
             R::delete_acctcat,
             R::get_acctcat,

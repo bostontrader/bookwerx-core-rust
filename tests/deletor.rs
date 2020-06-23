@@ -13,9 +13,11 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     let mut response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 1.2 Try to DELETE category 0.
     response = client.delete(format!("/category/{}/?apikey={}", (categories.get(0).unwrap()).id, apikey ))
@@ -125,34 +127,40 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     assert!(r.data.info.len() == 0);
     
     
-    // 2.4 DELETE accounts.  200 and DeleteSuccess.
+    // 2.4 DELETE accounts.
 
     // 2.4.1
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(2).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.4.2
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.4.3
     response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
     
 
-    // 2.5 DELETE currencies.  200 and DeleteSuccess.
+    // 2.5 DELETE currencies.
 
     // 2.5.1
     response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(2).unwrap()).id, apikey ))
@@ -214,12 +222,14 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     
     // 3. Now verify that all these collections are empty
 
-    // 3.1 GET /accounts. sb 200, empty array
+    // 3.1 GET /accounts.
     response = client.get(format!("/accounts?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<D::Account> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCurrencyResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 3.2 GET /acctcats. sb 200, empty array
     response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id))
@@ -235,7 +245,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(v.len(), 0);
 
-    // 3.4 GET /currencies. sb 200, empty array
+    // 3.4 GET /currencies.
     response = client.get(format!("/currencies?apikey={}", &apikey))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);

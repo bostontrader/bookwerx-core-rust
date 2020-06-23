@@ -1,3 +1,4 @@
+pub mod account;
 pub mod currency;
 pub mod get_account_dist_sum;
 pub mod get_category_dist_sums;

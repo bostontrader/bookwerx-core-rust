@@ -6,87 +6,110 @@ use rocket::http::Status;
 // Examine accounts
 pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>) -> Vec<D::AccountJoined> {
 
-    // 1. GET /accounts. sb 200, empty array
+    // 1. GET /accounts.
     let mut response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAccountResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 2. Try to post a new account
 
-    // 2.1. But first post using a non-existent apikey. 200 and db error.
+    // 2.1. But first post using a non-existent apikey.
     response = client.post("/accounts")
         .body(format!("apikey=notarealkey&currency_id={}&rarity=0&title=cash in mattress", (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 2.2 Successful post. 200 and InsertMessage.
+    // 2.2 Successful post.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    let mut lid: u64 = 0;
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid1) => { lid = lid1; assert!(lid > 0) },
+        _ => assert!(false)
+    }
 
-    // 2.3 Successful put. 200  and UpdateSuccess
+    // 2.3 Successful put.
     response = client.put("/accounts")
-        .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=cash in mattress", apikey, li.data.last_insert_id, (currencies.get(0).unwrap()).id))
+        .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=cash in mattress", apikey, lid, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 0  Warnings: 0"),
+        _ => assert!(false)
+    }
 
     // 3. Now verify that there's a single account
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 1);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAccountResponse::Many(v) => assert_eq!(v.len(), 1),
+        _ => assert!(false)
+    }
 
     // 4. Try to post w/bad currency id
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id=666&rarity=0&title=cash in mattress", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 5. Now submit a single GET of the prior POST. 200 and account.
-    response = client.get(format!("/account/{}/?apikey={}", li.data.last_insert_id, apikey))
+    // 5. Now submit a single GET of the prior POST.
+    response = client.get(format!("/account/{}/?apikey={}", lid, apikey))
         .dispatch();
-    // The mere fact that this successfully parses an account _is_ the test
-    let _c: D::Account = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAccountResponse::One(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 6. Make a 2nd Successful post. 200.
+    // 6. Make a 2nd Successful post.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 7. Make a 3rd Successful post. 200.  This account will not be referenced elsewhere and should be caught by the linter.
+    // 7. Make a 3rd Successful post.  This account will not be referenced elsewhere and should be caught by the linter.
     response = client.post("/accounts")
         .body(format!("apikey={}&currency_id={}&rarity=0&title=boats n hos", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 8. Verify that there are three accounts
+    // 8. Verify that there are three accounts.
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::AccountJoined> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 3);
-
-    v
+    let mut ret_val = Vec::new();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAccountResponse::Many(v) => {
+            assert_eq!(v.len(), 3);
+            ret_val = v
+        },
+        _ => assert!(false)
+    }
+    ret_val
 
 }

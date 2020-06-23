@@ -24,6 +24,7 @@ many derives.
  */
 
 // 1. The basic data formats.
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /accounts.
 #[derive(Serialize)]   // We send these as a json result.
@@ -298,6 +299,15 @@ pub enum APIResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+pub enum GetAccountResponse {
+    One(Account),
+    Many(Vec<AccountJoined>),
+    Error(String)
+}
+
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
 pub enum GetCurrencyResponse {
     One(Currency),
     Many(Vec<Currency>),
@@ -311,10 +321,6 @@ pub enum GetCurrencyResponse {
 pub struct ApiError {
     pub error: String
 }
-
-//pub struct ApiResponse {
-    //pub json: JsonValue,
-//}
 
 pub struct ApiResponseOld {
     pub json: JsonValue,

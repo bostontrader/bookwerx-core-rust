@@ -28,7 +28,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
         _ => assert!(false)
     }
 
-    // 2.2 Successful post. 200  and InsertMessage
+    // 2.2 Successful post. 200
     response = client.post("/currencies")
         .body(format!("apikey={}&rarity=0&symbol=QTL&title=Quatloo", apikey))
         .header(ContentType::Form)
@@ -66,8 +66,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
-    let body: D::APIResponse = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    match body {
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
         D::APIResponse::Error(_) => assert!(true),
         _ => assert!(false)
     }
