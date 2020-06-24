@@ -19,82 +19,103 @@ time stop <= 2020-12         7
 */
 pub fn transactions(client: &Client, apikey: &String) -> Vec<D::Transaction> {
 
-    // 1. GET /transactions. sb 200, empty array
+    // 1. GET /transactions.
     let mut response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetTransactionResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 2. Try to post a new transaction
 
-    // 2.1. But first post using a non-existent apikey. 200 and db error.
+    // 2.1. But first post using a non-existent apikey.
     response = client.post("/transactions")
         .body(format!("apikey=notarealkey&notes=notes&time=2020"))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
 
-    // 2.2 Successful post. 200 and InsertMessage.
+    // 2.2 Successful post.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=notes&time=2020", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    let mut lid: u64 = 0;
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid1) => { lid = lid1; assert!(lid > 0) },
+        _ => assert!(false)
+    }
 
-    // 2.3 Successful put. 200 and UpdateSuccess
+    // 2.3 Successful put.
     response = client.put("/transactions")
-        .body(format!("apikey={}&id={}&notes=notes&time=2020", apikey, li.data.last_insert_id))
+        .body(format!("apikey={}&id={}&notes=notes&time=2020", apikey, lid))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 0  Warnings: 0"),
+        _ => assert!(false)
+    }
 
     // 3. Now verify that there's a single transaction
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 1);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetTransactionResponse::Many(v) => assert_eq!(v.len(), 1),
+        _ => assert!(false)
+    }
 
     // 4. Post bad record...
 
-    // 5. Now submit a single GET of the prior POST. 200 and transaction.
-    response = client.get(format!("/transaction/{}/?apikey={}", li.data.last_insert_id, apikey))
+    // 5. Now submit a single GET of the prior POST.
+    response = client.get(format!("/transaction/{}/?apikey={}", lid, apikey))
         .dispatch();
-    // The mere fact that this successfully parses an transaction _is_ the test
-    let _c: D::Transaction = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetTransactionResponse::One(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-
-    // 6. Make the 2nd Successful post. 200.
+    // 6. Make the 2nd Successful post.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=notes&time=2020-12", apikey))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 7. Make the 3rd Successful post. 200.
+    // 7. Make the 3rd Successful post.
     response = client.post("/transactions")
         .body(format!("apikey={}&notes=notes&time=2020-12-31", apikey))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
     // 8. Now verify that there are three transactions
     response = client.get(format!("/transactions?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::Transaction> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 3);
-
-    v
+    let mut ret_val = Vec::new();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetTransactionResponse::Many(v) => {
+            assert_eq!(v.len(), 3);
+            ret_val = v
+        },
+        _ => assert!(false)
+    }
+    ret_val
 
 }

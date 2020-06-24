@@ -210,6 +210,7 @@ pub struct LinterLong {
     //pub ping: String
 //}
 
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /transactions.
 #[derive(Serialize)]   // We send these as a json result.
@@ -314,6 +315,13 @@ pub enum GetCurrencyResponse {
     Error(String)
 }
 
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum GetTransactionResponse {
+    One(Transaction),
+    Many(Vec<Transaction>),
+    Error(String)
+}
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Responder)]

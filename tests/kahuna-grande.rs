@@ -21,8 +21,6 @@ use bookwerx_core_rust::routes as R;
 use bookwerx_core_rust::routz as Z;
 
 use rocket::config::{Config, Environment};
-//use rocket::http::ContentType;
-//use rocket::http::Status;
 use rocket::local::Client;
 
 use std::collections::HashMap;
@@ -128,11 +126,11 @@ fn startup() -> Client {
             Z::get_linter_categories::get_linter_categories,
             Z::get_linter_currencies::get_linter_currencies,
 
-            R::delete_transaction,
-            R::get_transaction,
-            R::get_transactions,
-            R::post_transaction,
-            R::put_transaction
+            Z::transaction::delete_transaction,
+            Z::transaction::get_transaction,
+            Z::transaction::get_transactions,
+            Z::transaction::post_transaction,
+            Z::transaction::put_transaction
         ]);
 
     // 5. Build a client to talk to our instance of Rocket

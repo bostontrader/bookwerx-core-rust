@@ -212,11 +212,11 @@ fn main() {
             Z::get_linter_categories::get_linter_categories,
             Z::get_linter_currencies::get_linter_currencies,
 
-            R::delete_transaction,
-            R::get_transaction,
-            R::get_transactions,
-            R::post_transaction,
-            R::put_transaction
+            Z::transaction::delete_transaction,
+            Z::transaction::get_transaction,
+            Z::transaction::get_transactions,
+            Z::transaction::post_transaction,
+            Z::transaction::put_transaction
 
         ]).launch();
 }

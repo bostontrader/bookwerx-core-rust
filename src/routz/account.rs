@@ -50,7 +50,6 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<AccountDenormalized> =
-
         conn.prep_exec(r#"
                 SELECT
                     accounts.id as id, accounts.apikey as apikey, accounts.rarity, accounts.title as title,
@@ -125,11 +124,6 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
         ret_vec.push(act_struct.clone());
     }
 
-
-    //crate::db::ApiResponseOld{
-    //    json: rocket_contrib::json!(ret_vec),
-    //    status: Status::Ok,
-    //}
     Json(GetAccountResponse::Many(ret_vec))
 
 }
