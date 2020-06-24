@@ -7,12 +7,10 @@ pub mod db;
 pub mod dfp;
 pub mod routz;
 
-//use crate::routz::get_linter_categories;
-
 pub mod routes {
 
-    use crate::db::{MyRocketSQLConn, PostApikeysResponse};
-    use rocket::http::{ContentType, Status};
+    use crate::db::{MyRocketSQLConn, Ping, PostApikeysResponse, Semver};
+    use rocket::http::ContentType;
     use rocket::request::Request;
     use rocket::response;
     use rocket::response::{Responder, Response};
@@ -29,11 +27,16 @@ pub mod routes {
     }
 
     #[rocket::get("/")]
-    pub fn index() -> crate::db::ApiResponseOld {
-        crate::db::ApiResponseOld {
-            json: rocket_contrib::json!({"ping": "bookwerx-core-rust v0.30.0".to_string()}),
-            status: Status::Ok,
-        }
+    pub fn index() -> Json<Ping> {
+        Json(Ping {
+            about: "bookwerx-core-rust".to_string(),
+            url: "https://github.com/bostontrader/bookwerx-core-rust".to_string(),
+            v: Semver {
+                major: 1,
+                minor: 0,
+                patch: 0
+            }
+        })
     }
 
     #[rocket::post("/apikeys")]

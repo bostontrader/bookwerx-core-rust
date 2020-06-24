@@ -1,7 +1,6 @@
 use crate::dfp::DFP;
 use rocket::http::Status;
 use rocket::request::FromForm;
-use rocket::response::Responder;
 use rocket_contrib::database;
 use rocket_contrib::databases::mysql;
 use rocket_contrib::json::JsonValue;
@@ -208,10 +207,22 @@ pub struct LinterLong {
     pub title: String
 }
 
-//#[derive(Serialize)]
-//pub struct Ping {
-    //pub ping: String
-//}
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub struct Ping {
+    pub about: String,
+    pub url: String,
+    pub v: Semver,
+}
+
+// Semantic version
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub struct Semver {
+    pub major: u16,
+    pub minor: u16,
+    pub patch: u16,
+}
 
 #[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
@@ -355,13 +366,6 @@ pub enum GetTransactionResponse {
 pub enum PostApikeysResponse {
     Apikey(String),
     Error(String)
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Responder)]
-#[derive(Serialize)]   // We send these as a json result.
-pub struct ApiError {
-    pub error: String
 }
 
 pub struct ApiResponseOld {

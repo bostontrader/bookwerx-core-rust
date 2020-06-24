@@ -24,7 +24,7 @@ such as accounts, currencies, and transactions.
 
 ## Getting Started
 
-The best way to get started is to explore ***bookwerx-ui***.  It provides an example UI that demonstrates the API interaction with ***bookwerx-core***.
+The best way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an example UI that demonstrates the API interaction with ***bookwerx-core***.
 
 
 ## Installation

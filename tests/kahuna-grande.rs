@@ -21,6 +21,7 @@ use bookwerx_core_rust::routes as R;
 use bookwerx_core_rust::routz as Z;
 
 use rocket::config::{Config, Environment};
+use rocket::http::Status;
 use rocket::local::Client;
 
 use std::collections::HashMap;
@@ -29,7 +30,12 @@ use std::collections::HashMap;
 fn test() -> Result<(), Box<dyn std::error::Error>> {
     let client = startup();
 
-    // 1. We need two API keys.  Because we need to run the tests twice, once for each key, to ensure that the records stay separate.
+    // 1. Test the ping
+    let mut response = client.get("/").dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    let _ :D::Ping = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+
+    // 2. We need two API keys.  Because we need to run the tests twice, once for each key, to ensure that the records stay separate.
     let apikey1: String = apikey::apikey(&client);
     let apikey2: String = apikey::apikey(&client);
 
