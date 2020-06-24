@@ -351,6 +351,13 @@ pub enum GetTransactionResponse {
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum PostApikeysResponse {
+    Apikey(String),
+    Error(String)
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Responder)]
 #[derive(Serialize)]   // We send these as a json result.
 pub struct ApiError {
@@ -360,34 +367,4 @@ pub struct ApiError {
 pub struct ApiResponseOld {
     pub json: JsonValue,
     pub status: Status
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct DeleteMessage {
-    pub info: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct DeleteSuccess {
-    pub data: DeleteMessage
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct InsertMessage {
-    pub last_insert_id: u32
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct InsertSuccess {
-    pub data: InsertMessage
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct UpdateMessage {
-    pub info: String
-}
-
-#[derive(Deserialize)] // A test parses a response into this struct.
-pub struct UpdateSuccess {
-    pub data: UpdateMessage
 }
