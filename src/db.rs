@@ -154,6 +154,7 @@ pub struct CurrencyShort2 {
     pub title: String
 }
 
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /distributions.
 #[derive(Serialize)]   // We send these as a json result.
@@ -320,6 +321,15 @@ pub enum GetCategoryResponse {
 pub enum GetCurrencyResponse {
     One(Currency),
     Many(Vec<Currency>),
+    Error(String)
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum GetDistributionResponse {
+    One(Distribution),
+    Many(Vec<Distribution>),
+    ManyJoined(Vec<DistributionJoined>),
     Error(String)
 }
 

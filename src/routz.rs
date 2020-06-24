@@ -1,6 +1,7 @@
 pub mod account;
 pub mod category;
 pub mod currency;
+pub mod distribution;
 pub mod transaction;
 pub mod get_account_dist_sum;
 pub mod get_category_dist_sums;

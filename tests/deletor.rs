@@ -50,39 +50,47 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     }
 
     // 2. Now start deleting everything in a proper order such that the referential integrity constraints are satisfied.
-    // 2.1 DELETE distributions.  200 and DeleteSuccess.
+    // 2.1 DELETE distributions.
 
     // 2.1.1
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(3).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.1.2
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(2).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.1.3
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.1.4
     response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
 
     // 2.2 DELETE transactions.
@@ -270,12 +278,14 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
         _ => assert!(false)
     }
 
-    // 3.5 GET /distributions. sb 200, empty array
+    // 3.5 GET /distributions.
     response = client.get(format!("/distributions?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<D::Distribution> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetDistributionResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 3.6 GET /transactions.
     response = client.get(format!("/transactions?apikey={}", &apikey))
