@@ -16,7 +16,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.26.0") // Keep this in sync with TOML
+        (version: "0.27.0") // Keep this in sync with TOML
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -187,12 +187,12 @@ fn main() {
 
             R::post_apikey,
 
-            R::delete_category,
-            R::get_category,
-            R::get_categories,
+            Z::category::delete_category,
+            Z::category::get_category,
+            Z::category::get_categories,
             Z::get_category_dist_sums::get_category_dist_sums,
-            R::post_category,
-            R::put_category,
+            Z::category::post_category,
+            Z::category::put_category,
 
             Z::currency::delete_currency,
             Z::currency::get_currency,

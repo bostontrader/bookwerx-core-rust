@@ -101,12 +101,12 @@ fn startup() -> Client {
 
             R::post_apikey,
 
-            R::delete_category,
-            R::get_category,
-            R::get_categories,
+            Z::category::delete_category,
+            Z::category::get_category,
+            Z::category::get_categories,
             Z::get_category_dist_sums::get_category_dist_sums,
-            R::post_category,
-            R::put_category,
+            Z::category::post_category,
+            Z::category::put_category,
 
             Z::currency::delete_currency,
             Z::currency::get_currency,

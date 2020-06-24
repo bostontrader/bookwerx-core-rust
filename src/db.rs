@@ -102,6 +102,7 @@ pub struct Acctcat2 {
 #[derive(Deserialize)] // A test parses a response into this struct.
 pub struct Apikey { pub apikey: String }
 
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /categories.
 #[derive(Serialize)]   // We send these as a json result.
@@ -306,6 +307,13 @@ pub enum GetAccountResponse {
     Error(String)
 }
 
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum GetCategoryResponse {
+    One(Category),
+    Many(Vec<Category>),
+    Error(String)
+}
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.

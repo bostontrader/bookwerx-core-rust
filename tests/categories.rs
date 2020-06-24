@@ -6,89 +6,112 @@ use rocket::http::Status;
 // Examine categories
 pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
 
-    // 1. GET /categories. sb 200, empty array
+    // 1. GET /categories.
     let mut response = client.get(format!("/categories?apikey={}", &apikey))
         .dispatch();
-    let v: Vec<D::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 2. Try to post a new category.
 
-    // 2.1. But first post using a non-existent apikey. 200 and db error.
+    // 2.1. But first post using a non-existent apikey.
     response = client.post("/categories")
         .body("apikey=notarealkey&symbol=A&title=Assets")
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 2.2 Successful post. 200  and InsertMessage
+    // 2.2 Successful post.
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=A&title=Assets", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    let mut lid: u64 = 0;
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid1) => { lid = lid1; assert!(lid > 0) },
+        _ => assert!(false)
+    }
 
-    // 2.3 Successful put. 200  and UpdateSuccess
+    // 2.3 Successful put.
     response = client.put("/categories")
-        .body(format!("apikey={}&id={}&symbol=A&title=Assets", apikey, li.data.last_insert_id))
+        .body(format!("apikey={}&id={}&symbol=A&title=Assets", apikey, lid))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 0  Warnings: 0"),
+        _ => assert!(false)
+    }
 
     // 3. Now verify that there's a single category.
-    response = client.get(format!("/categories?apikey={}", &apikey))
-        .dispatch();
-    let v: Vec<D::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 1);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::Many(v) => assert_eq!(v.len(), 1),
+        _ => assert!(false)
+    }
 
-    // 4. Try to post a category with a duplicated symbol. 200 db error.
+    // 4. Try to post a category with a duplicated symbol.
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=A&title=Assets", apikey))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 5. Now submit a single GET of the prior POST. 200 and category.
-    response = client.get(format!("/category/{}/?apikey={}", li.data.last_insert_id, apikey))
+    // 5. Now submit a single GET of the prior POST.
+    response = client.get(format!("/category/{}/?apikey={}", lid, apikey))
         .dispatch();
-    // The mere fact that this successfully parses a category _is_ the test
-    let _c: D::Category = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::One(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 6. Make a 2nd Successful post. 200.
+    // 6. Make a 2nd Successful post.
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=L&title=Liabilities", apikey))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 7. Make a 3rd Successful post. 200.  This category will not be referenced elsewhere and should be caught by the linter.
+    // 7. Make a 3rd Successful post.
     response = client.post("/categories")
         .body(format!("apikey={}&symbol=Eq&title=Equity", apikey))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
     // 8. Verify that there are now three categories
     response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();
-    let v: Vec<D::Category> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 3);
-
-    v
+    let mut ret_val = Vec::new();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::Many(v) => {
+            assert_eq!(v.len(), 3);
+            ret_val = v
+        },
+        _ => assert!(false)
+    }
+    ret_val
 
 }
