@@ -6,24 +6,28 @@ use rocket::http::Status;
 // Examine acctcats
 pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined>, categories: &Vec<D::Category>) -> Vec<D::Acctcat> {
 
-    // 1. GET /acctcats. sb 200, empty array
+    // 1. GET /acctcats.
     let mut response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id)).dispatch();
-    let v: Vec<D::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAcctcatResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 2. Try to post a new acctcat.
 
-    // 2.1. But first post using a non-existent apikey. 200 and db error.
+    // 2.1. But first post using a non-existent apikey.
     response = client.post("/acctcats")
         .body(format!("apikey=notarealkey&account_id={}&category_id={}",(accounts.get(0).unwrap()).id,(categories.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 2.2 Successful post. 200  and InsertMessage
+    // 2.2 Successful post.
     response = client.post("/acctcats")
         .body(
             format!("apikey={}&account_id={}&category_id={}"
@@ -33,33 +37,39 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
             ))
         .header(ContentType::Form)
         .dispatch();
-    let mut li: D::InsertSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    let mut lid: u64 = 0;
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid1) => { lid = lid1; assert!(lid > 0) },
+        _ => assert!(false)
+    }
 
-    // 2.3 Successful put. 200  and UpdateSuccess
+    // 2.3 Successful put.
     response = client.put("/acctcats")
         .body(
             format!("apikey={}&id={}&account_id={}&category_id={}"
-                , apikey, li.data.last_insert_id
+                , apikey, lid
                 , (accounts.get(0).unwrap()).id
                 ,(categories.get(0).unwrap()).id
 
             ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::UpdateSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 0  Warnings: 0"),
+        _ => assert!(false)
+    }
 
     // 3. Now verify that there's a single acctcat.
     response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id))
         .dispatch();
-    let v: Vec<D::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 1);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAcctcatResponse::Many(v) => assert_eq!(v.len(), 1),
+        _ => assert!(false)
+    }
 
-    // 4. Try to post a acctcat with a duplicated account_id, category_id. 200 db error.
+    // 4. Try to post a acctcat with a duplicated account_id, category_id.
     response = client.post("/acctcats")
         .body(
             format!("apikey={}&account_id={}&category_id={}"
@@ -70,18 +80,22 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
             ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::ApiError = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.error.len() > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 5. Now submit a single GET of the prior POST. 200 and acctcat.
-    response = client.get(format!("/acctcat/{}/?apikey={}", li.data.last_insert_id, apikey))
+    // 5. Now submit a single GET of the prior POST.
+    response = client.get(format!("/acctcat/{}/?apikey={}", lid, apikey))
         .dispatch();
-    // The mere fact that this successfully parses a acctcat _is_ the test
-    let _c: D::Acctcat = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAcctcatResponse::One(_) => assert!(true),
+        _ => assert!(false)
+    }
 
-    // 6. Make a 2nd Successful post. 200.
+    // 6. Make a 2nd Successful post.
     response = client.post("/acctcats")
         .body(
             format!("apikey={}&account_id={}&category_id={}"
@@ -91,17 +105,23 @@ pub fn acctcats(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoine
             ))
         .header(ContentType::Form)
         .dispatch();
-    li = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(response.status(), Status::Ok);
-    assert!(li.data.last_insert_id > 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 6.1 Verify that there are now two acctcats
+    // 7. Verify that there are now two acctcats
     response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id))
         .dispatch();
-    let v: Vec<D::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 2);
-
-    v
+    let mut ret_val = Vec::new();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAcctcatResponse::Many(v) => {
+            assert_eq!(v.len(), 2);
+            ret_val = v
+        },
+        _ => assert!(false)
+    }
+    ret_val
 
 }

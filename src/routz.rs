@@ -1,4 +1,5 @@
 pub mod account;
+pub mod acctcat;
 pub mod category;
 pub mod currency;
 pub mod distribution;

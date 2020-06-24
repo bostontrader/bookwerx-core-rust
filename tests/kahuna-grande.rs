@@ -93,11 +93,11 @@ fn startup() -> Client {
             Z::account::post_account,
             Z::account::put_account,
 
-            R::delete_acctcat,
-            R::get_acctcat,
-            R::get_acctcats_for_category,
-            R::post_acctcat,
-            R::put_acctcat,
+            Z::acctcat::delete_acctcat,
+            Z::acctcat::get_acctcat,
+            Z::acctcat::get_acctcats_for_category,
+            Z::acctcat::post_acctcat,
+            Z::acctcat::put_acctcat,
 
             R::post_apikey,
 

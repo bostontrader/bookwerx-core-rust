@@ -125,23 +125,27 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
         _ => assert!(false)
     }
 
-    // 2.3 DELETE acctcats.  200 and DeleteSuccess.
+    // 2.3 DELETE acctcats.
 
     // 2.3.1
     response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(1).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
 
     // 2.3.2
     response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(0).unwrap()).id, apikey ))
         .header(ContentType::Form)
         .dispatch();
-    let r: D::DeleteSuccess = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
-    assert!(r.data.info.len() == 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(_) => assert!(true),
+        _ => assert!(false)
+    }
     
     
     // 2.4 DELETE accounts.
@@ -253,12 +257,13 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
         _ => assert!(false)
     }
 
-    // 3.2 GET /acctcats. sb 200, empty array
+    // 3.2 GET /acctcats.
     response = client.get(format!("/acctcats/for_category?apikey={}&category_id={}", &apikey, (categories.get(0).unwrap()).id))
         .dispatch();
-    let v: Vec<D::Acctcat> = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    assert_eq!(response.status(), Status::Ok);
-    assert_eq!(v.len(), 0);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetAcctcatResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false)
+    }
 
     // 3.3 GET /categories.
     response = client.get(format!("/categories?apikey={}", &apikey))

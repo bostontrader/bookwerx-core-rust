@@ -75,6 +75,7 @@ pub struct AccountShort1 {
     pub title: String
 }
 
+#[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /acctcats.
 #[derive(Serialize)]   // We send these as a json result.
@@ -305,6 +306,14 @@ pub enum APIResponse {
 pub enum GetAccountResponse {
     One(Account),
     Many(Vec<AccountJoined>),
+    Error(String)
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+pub enum GetAcctcatResponse {
+    One(Acctcat),
+    Many(Vec<Acctcat>),
     Error(String)
 }
 
