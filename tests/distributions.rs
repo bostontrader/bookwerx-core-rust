@@ -2,6 +2,7 @@ use bookwerx_core_rust::db as D;
 use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
+use bookwerx_core_rust::db::DistributionJoined;
 
 /* Please see the comments for transactions for a discussion of constraints in this test.
 
@@ -18,8 +19,9 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     // 1. GET /distributions/for_tx.
     let mut response = client.get(format!("/distributions/for_tx?apikey={}&transaction_id={}", &apikey, &transaction_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 0),
+    let s : D::GetDistributionJoinedResponse = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    match s {
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 0),
         _ => assert!(false)
     }
 
@@ -27,7 +29,7 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     let mut response = client.get(format!("/distributions/for_account?apikey={}&account_id={}", &apikey, &account_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 0),
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 0),
         _ => assert!(false)
     }
 
@@ -70,7 +72,7 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     response = client.get(format!("/distributions/for_tx?apikey={}&transaction_id={}", &apikey, &transaction_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 1),
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 1),
         _ => assert!(false)
     }
 
@@ -78,7 +80,7 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     response = client.get(format!("/distributions/for_account?apikey={}&account_id={}", &apikey, &account_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 1),
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 1),
         _ => assert!(false)
     }
 
@@ -103,14 +105,14 @@ pub fn distributions(client: &Client, apikey: &String, accounts: &Vec<D::Account
     response = client.get(format!("/distributions/for_tx?apikey={}&transaction_id={}", &apikey, &transaction_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 2),
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 2),
         _ => assert!(false)
     }
 
     response = client.get(format!("/distributions/for_account?apikey={}&account_id={}", &apikey, &account_id1)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetDistributionResponse::ManyJoined(v) => assert_eq!(v.len(), 1),
+        D::GetDistributionJoinedResponse::Many(v) => assert_eq!(v.len(), 1),
         _ => assert!(false)
     }
 

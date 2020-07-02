@@ -253,7 +253,7 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::GetCurrencyResponse::Many(v) => assert_eq!(v.len(), 0),
+        D::GetAccountResponse::Many(v) => assert_eq!(v.len(), 0),
         _ => assert!(false)
     }
 

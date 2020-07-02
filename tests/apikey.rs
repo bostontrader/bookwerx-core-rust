@@ -7,7 +7,6 @@ pub fn apikey(client: &Client) -> String {
 
     let mut response = client.post("/apikeys").dispatch();
     assert_eq!(response.status(), Status::Ok);
-    //let ak: D::Apikey = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     let mut ret_val = String::new();
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
         PostApikeysResponse::Apikey(key) => {

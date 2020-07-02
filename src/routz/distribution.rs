@@ -1,4 +1,4 @@
-use crate::db::{APIResponse, GetDistributionResponse, MyRocketSQLConn, Distribution, DistributionJoined, DistributionShort};
+use crate::db::{APIResponse, GetDistributionResponse, GetDistributionJoinedResponse, MyRocketSQLConn, Distribution, DistributionJoined, DistributionShort};
 use rocket::http::RawStr;
 use rocket_contrib::json::Json;
 
@@ -63,7 +63,7 @@ pub fn get_distributions(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<Get
 }
 
 // This is the core functionality of getting the distributions shared by for_tx and for_account
-fn get_distributions_private(query: &str, params: Vec<String>, mut conn: MyRocketSQLConn) -> Json<GetDistributionResponse> {
+fn get_distributions_private(query: &str, params: Vec<String>, mut conn: MyRocketSQLConn) -> Json<GetDistributionJoinedResponse> {
 
     let vec: Vec<DistributionJoined> =
         conn.prep_exec(query, params)
@@ -86,12 +86,12 @@ fn get_distributions_private(query: &str, params: Vec<String>, mut conn: MyRocke
                 }).collect()
             }).unwrap();
 
-    Json(GetDistributionResponse::ManyJoined(vec))
+    Json(GetDistributionJoinedResponse::Many(vec))
 
 }
 
 #[rocket::get("/distributions/for_account?<apikey>&<account_id>")]
-pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn: MyRocketSQLConn) -> Json<GetDistributionResponse> {
+pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn: MyRocketSQLConn) -> Json<GetDistributionJoinedResponse> {
 
     let mut params  = Vec::new(); // parametrization
 
@@ -104,7 +104,7 @@ pub fn get_distributions_for_account(apikey: &RawStr, account_id: &RawStr, conn:
 }
 
 #[rocket::get("/distributions/for_tx?<apikey>&<transaction_id>")]
-pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, conn: MyRocketSQLConn) -> Json<GetDistributionResponse> {
+pub fn get_distributions_for_tx(apikey: &RawStr, transaction_id: &RawStr, conn: MyRocketSQLConn) -> Json<GetDistributionJoinedResponse> {
 
     let mut params  = Vec::new(); // parametrization
 

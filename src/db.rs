@@ -314,6 +314,7 @@ pub enum APIResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetAccountResponse {
     One(Account),
     Many(Vec<AccountJoined>),
@@ -322,6 +323,7 @@ pub enum GetAccountResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetAcctcatResponse {
     One(Acctcat),
     Many(Vec<Acctcat>),
@@ -330,6 +332,7 @@ pub enum GetAcctcatResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetCategoryResponse {
     One(Category),
     Many(Vec<Category>),
@@ -338,6 +341,7 @@ pub enum GetCategoryResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetCurrencyResponse {
     One(Currency),
     Many(Vec<Currency>),
@@ -346,15 +350,25 @@ pub enum GetCurrencyResponse {
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetDistributionResponse {
     One(Distribution),
     Many(Vec<Distribution>),
-    ManyJoined(Vec<DistributionJoined>),
     Error(String)
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
+pub enum GetDistributionJoinedResponse {
+    // One(Distribution),
+    Many(Vec<DistributionJoined>),
+    Error(String)
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)]   // We send these as a json result.
+#[serde(untagged)]
 pub enum GetTransactionResponse {
     One(Transaction),
     Many(Vec<Transaction>),
@@ -364,6 +378,7 @@ pub enum GetTransactionResponse {
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)]   // We send these as a json result.
 pub enum PostApikeysResponse {
+    #[serde(rename="apikey")]
     Apikey(String),
     Error(String)
 }
