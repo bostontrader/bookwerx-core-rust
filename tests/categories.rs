@@ -116,8 +116,6 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
     response = client.get(format!("/category/bysym/{}/?apikey={}", "666", apikey))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
-    //let n = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
-    //let n1 = response.body_string().unwrap();
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
         D::GetCategoryResponse::Error(_) => assert!(true),
         _ => assert!(false)
