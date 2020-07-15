@@ -110,6 +110,7 @@ fn startup() -> Client {
             Z::category::delete_category,
             Z::category::get_category,
             Z::category::get_categories,
+            Z::category::get_category_bysym,
             Z::get_category_dist_sums::get_category_dist_sums,
             Z::category::post_category,
             Z::category::put_category,

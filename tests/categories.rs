@@ -101,7 +101,29 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         _ => assert!(false)
     }
 
-    // 8. Verify that there are now three categories
+    // 8. Get by symbol
+
+    // 8.1 Get by existing symbol
+    response = client.get(format!("/category/bysym/{}/?apikey={}", "A", apikey))
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::One(_) => assert!(true),
+        _ => assert!(false)
+    }
+
+    // 8.2 Get by non-existing symbol
+    response = client.get(format!("/category/bysym/{}/?apikey={}", "666", apikey))
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    //let n = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    //let n1 = response.body_string().unwrap();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetCategoryResponse::Error(_) => assert!(true),
+        _ => assert!(false)
+    }
+
+    // 9. Verify that there are now three categories and return them.
     response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     let mut ret_val = Vec::new();
@@ -112,6 +134,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         },
         _ => assert!(false)
     }
+
     ret_val
 
 }

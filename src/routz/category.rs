@@ -43,6 +43,32 @@ pub fn get_category(id: &RawStr, apikey: &RawStr, mut conn: MyRocketSQLConn) -> 
 
 }
 
+#[rocket::get("/category/bysym/<symbol>?<apikey>")]
+pub fn get_category_bysym(symbol: &RawStr, apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetCategoryResponse> {
+
+    let mut params  = Vec::new();
+
+    // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
+    params.push(symbol.html_escape().to_mut().clone());
+    params.push(apikey.html_escape().to_mut().clone());
+
+    let vec: Vec<Category> =
+        conn.prep_exec("SELECT id, apikey, symbol, title from categories where symbol = :symbol and apikey = :apikey", params)
+            .map(|result| {
+                result.map(|x| x.unwrap()).map(|row| {
+                    let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                    Category {id, apikey, symbol, title}
+                }).collect()
+            }).unwrap();
+
+    match vec.len() {
+        0 => Json(GetCategoryResponse::Error(String::from("record not found"))),
+        1 => Json(GetCategoryResponse::One((*vec.get(0).unwrap()).clone())),
+        _ => Json(GetCategoryResponse::Error(String::from("ID01T Max fubar error. More than one record found. This does not compute.")))
+    }
+
+}
+
 #[rocket::get("/categories?<apikey>")]
 pub fn get_categories(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetCategoryResponse> {
 
