@@ -5,7 +5,7 @@ use rocket_contrib::json;
 use std::collections::HashMap;
 
 /*
-Given a category_id, find all the distributions related to all accounts tagged as that category, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sums will be expressed using a decimal floating point format.
+Given a comma delimited list of category_id, find all the distributions related to all accounts tagged as that category, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sums will be expressed using a decimal floating point format.
 
 Given an optional boolean decorate param, return extra decorative related fields such as account title and currency symbol.
 
@@ -70,7 +70,7 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
             JOIN distributions AS ds ON ds.account_id = ac.id
             JOIN transactions AS tx ON tx.id = ds.transaction_id
 
-            WHERE ca.id = :category_id
+            WHERE ca.id in (:category_id)
             AND ca.apikey = :apikey
             {}
             ORDER BY ac.id
