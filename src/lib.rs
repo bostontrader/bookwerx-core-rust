@@ -31,10 +31,10 @@ pub mod routes {
         Json(Ping {
             about: "bookwerx-core-rust".to_string(),
             url: "https://github.com/bostontrader/bookwerx-core-rust".to_string(),
-            v: Semver {
+            v: Semver {   // VERSION
                 major: 2,
-                minor: 0,
-                patch: 0
+                minor: 1,
+                patch: 1
             }
         })
     }
