@@ -19,6 +19,6 @@ before_install:
 script:
   # Be careful with this hardwired IP address!
   - cargo run --bin dbseed -- --conn mysql://root:supersecretpassword@172.17.0.2:3306 --dbname bookwerx-core-rust-test --seed dbseed.sql
-  - cargo tarpaulin --out Xml
+  - RUST_TEST_THREADS=1 cargo tarpaulin --out Xml
   - bash <(curl -s https://codecov.io/bash)
 

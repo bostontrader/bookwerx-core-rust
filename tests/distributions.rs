@@ -2,7 +2,7 @@ use bookwerx_core_rust::db as D;
 use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
-use bookwerx_core_rust::db::DistributionJoined;
+//use bookwerx_core_rust::db::DistributionJoined;
 
 /* Please see the comments for transactions for a discussion of constraints in this test.
 
