@@ -18,7 +18,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
 
     // 2.1. But first post using a non-existent apikey.
     response = client.post("/accounts")
-        .body(format!("apikey=notarealkey&currency_id={}&rarity=0&title=cash in mattress", (currencies.get(0).unwrap()).id))
+        .body(format!("apikey=notarealkey&currency_id={}&rarity=0&title=Cash in mattress", (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -29,7 +29,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
 
     // 2.2 Successful post.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id={}&rarity=0&title=cash in mattress", apikey, (currencies.get(0).unwrap()).id))
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=Cash in mattress", apikey, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -41,7 +41,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
 
     // 2.3 Successful put.
     response = client.put("/accounts")
-        .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=cash in mattress", apikey, lid, (currencies.get(0).unwrap()).id))
+        .body(format!("apikey={}&id={}&currency_id={}&rarity=0&title=Cash in mattress", apikey, lid, (currencies.get(0).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -60,7 +60,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
 
     // 4. Try to post w/bad currency id
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id=666&rarity=0&title=cash in mattress", apikey))
+        .body(format!("apikey={}&currency_id=666&rarity=0&title=Cash in mattress", apikey))
         .header(ContentType::Form)
         .dispatch();
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
@@ -79,7 +79,7 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
 
     // 6. Make a 2nd Successful post.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id={}&rarity=0&title=bank of mises", apikey, (currencies.get(1).unwrap()).id))
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=Cash in cookie jar", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -88,9 +88,9 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
         _ => assert!(false)
     }
 
-    // 7. Make a 3rd Successful post.  This account will not be referenced elsewhere and should be caught by the linter.
+    // 7. Make a 3rd Successful post.
     response = client.post("/accounts")
-        .body(format!("apikey={}&currency_id={}&rarity=0&title=boats n hos", apikey, (currencies.get(1).unwrap()).id))
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=Bank of Mises", apikey, (currencies.get(1).unwrap()).id))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -99,13 +99,24 @@ pub fn accounts(client: &Client, apikey: &String, currencies: &Vec<D::Currency>)
         _ => assert!(false)
     }
 
-    // 8. Verify that there are three accounts.
+    // 8. Make a 4th Successful post.  This account will not be referenced elsewhere and should be caught by the linter.
+    response = client.post("/accounts")
+        .body(format!("apikey={}&currency_id={}&rarity=0&title=Boats n hos", apikey, (currencies.get(1).unwrap()).id))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
+
+    // 9. Verify that there are four accounts.
     response = client.get(format!("/accounts?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     let mut ret_val = Vec::new();
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
         D::GetAccountResponse::Many(v) => {
-            assert_eq!(v.len(), 3);
+            assert_eq!(v.len(), 4);
             ret_val = v
         },
         _ => assert!(false)

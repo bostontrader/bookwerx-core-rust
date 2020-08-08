@@ -3,20 +3,6 @@ use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
-/* This function will create 3 transactions.  The times of the transactions, as well as the amounts of the related distributions, have been crafted such that the account_dist_sum and category_dist_sums functions will be able to differentiate between these tx. To wit:
-
-Time        Amt
-2020          3
-2020-12       4
-2020-12-31    5
-
-Filter                     Sum
-no filter	                12
-time start >= 2020-12        9
-time stop <= 2020-12         7
-2012-12 <= time_start
-  && time_stop <= 2012-12    4
-*/
 pub fn transactions(client: &Client, apikey: &String) -> Vec<D::Transaction> {
 
     // 1. GET /transactions.

@@ -58,16 +58,18 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         }
     }
 
+    let q = format!("
+        SELECT ac.id, ds.amount, ds.amount_exp
+        FROM accounts AS ac
+        JOIN distributions AS ds ON ds.account_id = ac.id
+        JOIN transactions AS tx ON tx.id = ds.transaction_id
+        WHERE ac.id = :account_id
+            AND ac.apikey = :apikey
+            {}
+            ", time_clause);
+
     let vec: Vec<crate::db::BalanceResult> =
-        conn.prep_exec(format!("
-                SELECT ac.id, ds.amount, ds.amount_exp
-                FROM accounts AS ac
-                JOIN distributions AS ds ON ds.account_id = ac.id
-                JOIN transactions AS tx ON tx.id = ds.transaction_id
-                WHERE ac.id = :account_id
-                    AND ac.apikey = :apikey
-                    {}
-                    ", time_clause), params )
+        conn.prep_exec(q, params )
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
                     let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);

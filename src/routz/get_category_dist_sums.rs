@@ -5,7 +5,9 @@ use rocket_contrib::json;
 use std::collections::HashMap;
 
 /*
-Given a comma delimited list of category_id, find all the distributions related to all accounts tagged as that category, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sums will be expressed using a decimal floating point format.
+Given a comma delimited list of category_id, find all the distributions related to all accounts tagged as _all_ of the given categories, optionally filtered by time, and calculate and return the sum of the distributions for each particular account. Recall that the returned sums will be expressed using a decimal floating point format.
+
+A list of categories of one entry is merely a special case of the above, without a comma, and should work the same way.
 
 Given an optional boolean decorate param, return extra decorative related fields such as account title and currency symbol.
 
@@ -33,7 +35,8 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
 
     // 1.1 We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
     // WARNING! Push these in the same order they are used in the prep_exec function!
-    params.push(category_id.html_escape().to_mut().clone());
+    //params.push(category_id.html_escape().to_mut().clone());
+    let pcat = category_id.html_escape().to_mut().clone();
     params.push(apikey.html_escape().to_mut().clone());
 
     // 1.2 time_start and time_stop are both optional.
@@ -61,20 +64,46 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     }
 
     // 2. Obtain all of the relevant distributions.
-    let vec: Vec<crate::db::BalanceResult> =
-        conn.prep_exec(format!("
-            SELECT ac.id, ds.amount, ds.amount_exp
-            FROM categories AS ca
-            JOIN accounts_categories AS acats on acats.category_id = ca.id
-            JOIN accounts AS ac on acats.account_id = ac.id
-            JOIN distributions AS ds ON ds.account_id = ac.id
-            JOIN transactions AS tx ON tx.id = ds.transaction_id
+    // The subquery produces a list of relevant accounts recall that we want accounts that are tagged with _all_ of the given categories.  The outer query filters by time and produces the final values.
 
-            WHERE ca.id in (:category_id)
-            AND ca.apikey = :apikey
-            {}
-            ORDER BY ac.id
-            ", time_clause), params )
+    // 2.1 We'll need to know how many categories the caller requested.
+    // If a category param is not sent, execution will never get here.  If a category param is sent, then category_cnt must therefore be at least 1.
+    let mut category_cnt = 0;
+    for _ in pcat.split(',') {
+        category_cnt = category_cnt + 1;
+    }
+
+    // 2.2 Build a subquery to retrieve the relevant account_id, based on the quantity of categories requested.  Can these queries be unified into a single query regardless of the category_cnt?
+
+    let acct_sub_query = if category_cnt == 1 {
+        format!("
+            ( SELECT account_id
+              FROM accounts_categories
+              WHERE category_id = {}
+              AND apikey = :apikey
+            )
+        ", pcat)
+    } else { // must be > 1
+        format!("
+            ( SELECT account_id
+              FROM accounts_categories
+              WHERE category_id IN ({})  AND apikey = :apikey
+              GROUP BY account_id
+              HAVING count(*) = {}
+            )
+        ", pcat, category_cnt)
+    };
+
+    let q = format!("
+            SELECT account_id, amount, amount_exp
+                FROM distributions AS ds
+                JOIN transactions as tx on tx.id = ds.transaction_id
+            WHERE account_id in ( {} )
+            {}  ORDER BY account_id
+            ", acct_sub_query, time_clause);
+
+    let vec: Vec<crate::db::BalanceResult> =
+        conn.prep_exec(q, params )
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
                     let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
@@ -106,11 +135,15 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     let mut sum: DFP = DFP {amount: 0, exp: 0};
     let mut prior_account_id = 0;
     for v in vec {
+
         if v.account_id != prior_account_id {
+
             // This is the first record of a new account_id
             if prior_account_id == 0 {
+
                 // This is the very first time in the loop. Nothing to do yet.
             } else {
+
                 // This is the first element that has a new account_id. Save the sum from the prior account_id
                 hm.insert(prior_account_id, crate::db::AcctSum { account_id: prior_account_id, sum });
             }
@@ -118,12 +151,14 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
             //sum = DFP { amount: v.amount, exp: v.amount_exp };
             sum = DFP { amount: 0, exp: 0 };
         }
+
         // This records account_id is the same as the prior record, so just add the values
         sum = sum.add(&DFP { amount: v.amount, exp: v.amount_exp });
     }
 
     // 3.3.1 The above loop should have executed at least once so we should have a real v and sum.
     // Now that the iteration is done, we still need to insert the final v and sum into the HashMap.
+
     hm.insert(prior_account_id, crate::db::AcctSum{ account_id: prior_account_id, sum});
 
     // 4. We will soon need this.  Is there an easier way to do this?

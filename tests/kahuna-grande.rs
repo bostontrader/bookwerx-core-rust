@@ -49,16 +49,65 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
 fn kahuna_grande(client: &Client, apikey: &String) {
 
     // Test in this order in order to accommodate referential integrity
+
+    // QTL | Quatloo
+    // XAU | Gold
+    // GAS | General Atomic Shekel <- Unused. Let the linter find this.
     let currencies = currencies::currencies(&client, &apikey);
+
+    // Cash in mattress   | QTL
+    // Cash in cookie jar | QTL
+    // Bank of Mises      | XAU
+    // Boats n hos        | XAU <- Unused. Let the linter find this.
     let accounts = accounts::accounts(&client, &apikey, &currencies);
+
+    // A  | Assets
+    // L  | Liabilities
+    // Eq | Equity <- Unused. Let the linter find this.
+    // C  | Specific customer
+    let categories = categories::categories(&client, &apikey);
+
+    // One account (cash in mattress) is tagged with two categories (assets, specific customer).
+    // One category (assets) tagges two accounts (cash in mattress | cookie jar)
+    // Cash in mattress   | Assets
+    // Cash in mattress   | Specific customer
+    // Cash in cookie jar | Assets
+    // Bank of Mises      | Liabilities
+    let acctcats = acctcats::acctcats(&client, &apikey, &accounts, &categories);
+
+    /* We will create 3 transactions dated 2020, 2020-12, and 2020-12-31.
+
+    We will create the following distributions for these 3 transactions:
+    tx  | account            | amount
+    tx0 | cash in mattress   | 3
+        | cash in cookie jar | -3
+    tx1 | cash in mattress   | 4
+        | cash in cookie jar | -4
+    tx2 | cash in mattress   | 5
+        | cash in cookie jar | -5
+
+    Given these transactions and distributions:
+
+    A. account_dist_sum, for account "cash in mattress" will return the following values for the four permutations of time filter
+
+    Filter                     Sum
+    no filter	                12
+    time start >= 2020-12        9
+    time stop <= 2020-12         7
+    2012-12 <= time_start
+      && time_stop <= 2012-12    4
+
+    B. category_dist_sums, for categories "assets" and "specific customer" will return the same.
+
+    C. category_dist_sums, for the single category "assets" will return zeros.
+    */
     let transactions = transactions::transactions(&client, &apikey);
     let distributions = distributions::distributions(&client, &apikey, &accounts, &transactions);
-    let categories = categories::categories(&client, &apikey);
-    let acctcats = acctcats::acctcats(&client, &apikey, &accounts, &categories);
+
 
     linter::linter(&client, &apikey);
     let _ = account_dist_sum::account_dist_sum(&client, &apikey, &accounts);
-    let _ = category_dist_sums::category_dist_sums(&client, &apikey, &accounts, &categories);
+    let _ = category_dist_sums::category_dist_sums(&client, &apikey, &categories);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
     deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);

@@ -3,7 +3,6 @@ use rocket::local::Client;
 use rocket::http::ContentType;
 use rocket::http::Status;
 
-// Examine currencies
 pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
 
     // 1. GET /currencies. sb 200, empty array

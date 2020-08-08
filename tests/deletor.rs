@@ -50,202 +50,79 @@ pub fn deletor(client: &Client, apikey: &String, accounts: &Vec<D::AccountJoined
     }
 
     // 2. Now start deleting everything in a proper order such that the referential integrity constraints are satisfied.
-    // 2.1 DELETE distributions.
 
-    // 2.1.1
-    response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(3).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.1 DELETE all distributions.
+    for distribution in distributions {
+        response = client.delete(format!("/distribution/{}/?apikey={}", distribution.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-    // 2.1.2
-    response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(2).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.2 DELETE all transactions.
+    for transaction in transactions {
+        response = client.delete(format!("/transaction/{}/?apikey={}", transaction.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-    // 2.1.3
-    response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.3 DELETE all acctcats.
+    for acctcat in acctcats {
+        response = client.delete(format!("/acctcat/{}/?apikey={}", acctcat.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-    // 2.1.4
-    response = client.delete(format!("/distribution/{}/?apikey={}", (distributions.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.4 DELETE all accounts.
+    for account in accounts {
+        response = client.delete(format!("/account/{}/?apikey={}", account.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-
-    // 2.2 DELETE transactions.
-
-    // 2.2.1
-    response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(2).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.5 DELETE all currencies.
+    for currency in currencies {
+        response = client.delete(format!("/currency/{}/?apikey={}", currency.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-    // 2.2.2
-    response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
+    // 2.6 DELETE all categories.
+    for category in categories {
+        response = client.delete(format!("/category/{}/?apikey={}", category.id, apikey ))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false)
+        }
     }
 
-    // 2.2.3
-    response = client.delete(format!("/transaction/{}/?apikey={}", (transactions.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.3 DELETE acctcats.
-
-    // 2.3.1
-    response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.3.2
-    response = client.delete(format!("/acctcat/{}/?apikey={}", (acctcats.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-    
-    
-    // 2.4 DELETE accounts.
-
-    // 2.4.1
-    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(2).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.4.2
-    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.4.3
-    response = client.delete(format!("/account/{}/?apikey={}", (accounts.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-    
-
-    // 2.5 DELETE currencies.
-
-    // 2.5.1
-    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(2).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.5.2
-    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.5.3
-    response = client.delete(format!("/currency/{}/?apikey={}", (currencies.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-
-    // 2.6 DELETE categories.
-
-    // 2.6.1
-    response = client.delete(format!("/category/{}/?apikey={}", (categories.get(2).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.6.2
-    response = client.delete(format!("/category/{}/?apikey={}", (categories.get(1).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-
-    // 2.6.3
-    response = client.delete(format!("/category/{}/?apikey={}", (categories.get(0).unwrap()).id, apikey ))
-        .header(ContentType::Form)
-        .dispatch();
-    assert_eq!(response.status(), Status::Ok);
-    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(_) => assert!(true),
-        _ => assert!(false)
-    }
-    
     // 3. Now verify that all these collections are empty
 
     // 3.1 GET /accounts.

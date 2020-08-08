@@ -10,7 +10,7 @@ pub fn account_dist_sum(client: &Client, apikey: &String, accounts: &Vec<D::Acco
     assert_eq!(r.sum.amount, 0);
     assert_eq!(r.sum.exp, 0);
 
-    // 2. The four permutations of good account_id and time_*
+    // 2. Good account_id with the four permutations of time_*
 
     // 2.1 no time_*
     response = client.get(format!("/account_dist_sum?apikey={}&account_id={}", &apikey, (accounts.get(0).unwrap()).id)).dispatch();

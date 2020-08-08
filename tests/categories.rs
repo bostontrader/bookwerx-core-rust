@@ -101,9 +101,20 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         _ => assert!(false)
     }
 
-    // 8. Get by symbol
+    // 8. Make a 4th Successful post.
+    response = client.post("/categories")
+        .body(format!("apikey={}&symbol=C&title=Specific customer", apikey))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::LastInsertId(lid) => assert!(lid > 0),
+        _ => assert!(false)
+    }
 
-    // 8.1 Get by existing symbol
+    // 9. Get by symbol
+
+    // 9.1 Get by existing symbol
     response = client.get(format!("/category/bysym/{}/?apikey={}", "A", apikey))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -112,7 +123,7 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         _ => assert!(false)
     }
 
-    // 8.2 Get by non-existing symbol
+    // 9.2 Get by non-existing symbol
     response = client.get(format!("/category/bysym/{}/?apikey={}", "666", apikey))
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -121,13 +132,13 @@ pub fn categories(client: &Client, apikey: &String) -> Vec<D::Category> {
         _ => assert!(false)
     }
 
-    // 9. Verify that there are now three categories and return them.
+    // 10. Verify that there are now four categories and return them.
     response = client.get(format!("/categories?apikey={}", &apikey)).dispatch();
     assert_eq!(response.status(), Status::Ok);
     let mut ret_val = Vec::new();
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
         D::GetCategoryResponse::Many(v) => {
-            assert_eq!(v.len(), 3);
+            assert_eq!(v.len(), 4);
             ret_val = v
         },
         _ => assert!(false)
