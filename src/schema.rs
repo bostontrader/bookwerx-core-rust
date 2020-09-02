@@ -30,29 +30,6 @@ impl Query {
         //let m4 = m3.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where apikey = :apikey", params);
 
 
-
-        //match m2 {
-            //None => println!("none"),
-            //Some(conn) => {
-                //#[rocket::get("/currencies?<apikey>")]
-                //pub fn get_currencies(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetCurrencyResponse> {
-                // We receive apikey as &RawStr.  We must convert it into a form that the mysql parametrization can use.
-                let mut params= Vec::new();
-                params.push("catfood".to_string());
-
-                //params.push(apikey.html_escape().to_mut().clone());
-                //let vec: Vec<Currency> =
-                //let n = (*m1).prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where apikey = :apikey", params);
-                //.map(|result| {
-                //result.map(|x| x.unwrap()).map(|row| {
-                //Currency {id,apikey,rarity,symbol,title}
-                //}).collect()
-                //}).unwrap();
-                //Json(GetCurrencyResponse::Many(vec))
-                //}
-            //},
-        //}
-
         42
     }
 
