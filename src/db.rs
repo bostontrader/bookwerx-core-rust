@@ -9,6 +9,13 @@ use serde::{Deserialize, Serialize};
 #[database("mysqldb")]
 pub struct MyRocketSQLConn(mysql::Conn);
 
+// This is one possible way to get the connection object out of here.
+//impl MyRocketSQLConn {
+    //pub fn get_conn(&self) {
+        //let m1 = &*self.0;
+    //}
+//}
+
 /*
 We have a blizzard of structs for a variety of reasons.  Unfortunately, it's rather tedious to
 manage them.  Please allow me to enumerate the problems and solutions.

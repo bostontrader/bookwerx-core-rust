@@ -1,11 +1,13 @@
 [package]
 name = "bookwerx-core-rust"
-version = "2.3.0" #  VERSION
+version = "2.3.1" #  VERSION
 authors = ["Thomas Radloff <bostontrader@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 clap = "2.33.2" # 2020-Aug
+juniper = "0.14.1"
+juniper_rocket = "0.5.1"
 mysql = "16.0.2"
 rand = "0.7.3" # 2020-Aug
 rocket = "0.4.5" # 2020-May

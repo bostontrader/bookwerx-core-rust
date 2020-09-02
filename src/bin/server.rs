@@ -4,19 +4,27 @@
 
 use bookwerx_core_rust::constants as C;
 use bookwerx_core_rust::db as D;
+use bookwerx_core_rust::model as M;
 use bookwerx_core_rust::routes as R;
+use bookwerx_core_rust::schema as S;
 use bookwerx_core_rust::routz as Z;
 
 use clap::clap_app;
 use std::env;
 use rocket::config::{Config, Environment};
 
+use juniper::{EmptyMutation, RootNode};
+use rocket::response::content;
+use rocket::State;
+use bookwerx_core_rust::db::MyRocketSQLConn;
+
+use std::sync::{Arc, Mutex};
 
 fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "2.3.0") // VERSION
+        (version: "2.3.1") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -164,11 +172,14 @@ fn main() {
 
     println!("{:?}", cors);
 
+    let jdb = M::JunDatabase::new();
 
     // 3.4 Finally, launch it
     rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
         .attach(cors)
+        .manage(jdb)
+        .manage(Schema::new(S::Query, EmptyMutation::<M::JunDatabase>::new()))
         .mount("/", routes![
             R::index,
 
@@ -217,7 +228,47 @@ fn main() {
             Z::transaction::get_transaction,
             Z::transaction::get_transactions,
             Z::transaction::post_transaction,
-            Z::transaction::put_transaction
+            Z::transaction::put_transaction,
 
-        ]).launch();
+            graphiql, get_graphql_handler, post_graphql_handler
+
+        ])
+        .launch();
+}
+
+type Schema = RootNode<'static, S::Query, EmptyMutation<M::JunDatabase>>;
+
+
+#[rocket::get("/graphql")]
+fn graphiql() -> content::Html<String> {
+    juniper_rocket::graphiql_source("/graphql")
+}
+
+#[rocket::get("/graphql?<request>")]
+fn get_graphql_handler(
+    context: State<M::JunDatabase>,
+    request: juniper_rocket::GraphQLRequest,
+    schema: State<Schema>,
+) -> juniper_rocket::GraphQLResponse {
+    request.execute(&schema, &context)
+}
+
+
+#[rocket::post("/graphql", data = "<request>")]
+fn post_graphql_handler(
+    context: State<M::JunDatabase>,
+    request: juniper_rocket::GraphQLRequest,
+    schema: State<Schema>,
+    mut conn: MyRocketSQLConn
+) -> juniper_rocket::GraphQLResponse {
+
+
+    {
+        let m = &*context.conn;
+        let mut m1 = m.lock().unwrap();
+        *m1 = Some(conn);
+    }
+
+    request.execute(&schema, &context)
+
 }

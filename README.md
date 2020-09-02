@@ -6,7 +6,11 @@
 
 The purpose of ***bookwerx-core*** is to provide an API that supports multi-currency
  bookkeeping, using the double-entry bookkeeping model, slightly adapted to squeeze 
- in multiple currencies.  It uses [rust](https://www.rust-lang.org), [rocket](https://rocket.rs), and [mysql](https://www.mysql.com).
+ in multiple currencies.  
+ 
+At this time the API is primarily RESTful.  However, this is proving to be too tedious to deal with because of the proliferation of different queries and selection criteria that actual requires.  We have therefore established a minimal GraphQL endpoint as well.  Said endpoint is presently at the hello-world stage but it's humble step in the right direction.
+ 
+ ***bookwerx-core*** is written using [the rust programming language.](https://www.rust-lang.org), It uses [rocket](https://rocket.rs) as its web server with [MySQL](https://www.mysql.com) for... you know what MySQL is for.  Finally, it uses [Juniper](https://github.com/graphql-rust/juniper) as the GraphQL library.
 
 Any application that deals with "money" (fiat, precious metals, cryptocoins) will
 quickly encounter the need for bookkeeping.  Rolling your own methods is, as usual,
@@ -24,8 +28,18 @@ such as accounts, currencies, and transactions.
 
 ## Getting Started
 
-The best way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an example UI that demonstrates the API interaction with ***bookwerx-core***.
+The easiest way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an [example UI](http://185.183.96.73:3005/) that demonstrates the API interaction with ***bookwerx-core***.
 
+Using this UI you can connect to a [publicly visible demonstration server](http://185.183.96.73:3003), request an API key for your own use, and generally put the API to work.  The UI also guides you through a proper sequence of API calls.  For example, you cannot define an account until you have defined the currency that said account will use.  The UI will also show you the API requests that it creates as well as the responses that it receives.
+
+You can also connect to the [GraphQL endpoint](http://185.183.96.73:3003/graphql) at the same server.  This will present a GraphiQL view that you can use to explore the server's GraphQL capabilities.
+
+You can also send an HTTP POST with a particular GraphQL query:
+```
+export SERVER=http://localhost:3003/graphql
+curl -X POST -H "Content-Type: application/json" -d '{"query": "{ hello }"}' $SERVER
+curl -X POST -H "Content-Type: application/json" -d '{"query": "{ currencies }"}' $SERVER
+```
 
 ## Installation
 
@@ -92,11 +106,26 @@ BCR_MODE - Run the server in whatever mode.
 
 **bookwerx-core-rust** uses Rocket as the http server, but it programmatically configures Rocket, so no other Rocket configuration is needed.
 
-### MariaDB
+### MySQL
 
 **bookwerx-core-rust** uses MySQL for the db.  [This is configured separately.](https://dev.mysql.com)
 
-Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that people might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your MySQL server to get the particular settings that you want.
+Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that you might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your MySQL server to get the particular settings that you want.
+
+## Rust-Rocket-Juniper-MySQL Integration
+
+There are numerous examples of integrating the Juniper GraphQL library with the Rocket webserver.  Unfortunately said examples use contrived toy databases to do their thing.  Real world use frequently requires the use of a db connection object of some sort.  Injecting said object into the Juniper library proved to be a difficult thing to do.  But we've got that beat now so hopefully our code can serve as a useful example for the next hapless soul trapped in this tarpit.
+
+The basic issue is that... using MySQL as an example...
+
+1. Rocket obtains a connection to the db via it's [own methods](https://rocket.rs/v0.4/guide/state/#databases) which uses a "fairing" and the .attach method, but is documented under "state".  Read the instructions carefully, study the examples, and work your way through it and you can do this.  This is not _just_ a matter of code, it's also an issue of how to inject db connection configuration.
+
+2. Juniper's contortions include the creation of a Database object that it feeds into a GraphQL query which ultimately does the work.  The Database object is a great place to put contrived toy example databases, but it alone is not sufficient to connect to MySQL.
+
+3. Rocket's db connection object and Juniper's Database object can both be injected into the route handler for GraphQL.  That's a promising lead.  So all we have to do is create a field of Juniper's Database struct to store the database connection from Rocket, right?  You're barking up the right tree but you're not there yet.
+
+4. The basic problem is that Juniper's Database object is [immutable for reasons of thread safety](https://github.com/graphql-rust/juniper/issues/5).  One answer is to create the field for the connection in Juniper's Database object, but wrap it thus Arc<Mutex<Option<MyRocketSQLConn>>>  Once you know the secret it seems so easy and obvious.
+
 
 ## Dates and Times
 
@@ -106,4 +135,6 @@ A transaction occurs at a single instant in time with said time recorded as any 
 
 One practical example would be an ISO-8601 string.  Said strings can have the quantity of seconds recorded to an unknown, but sufficient, quantity of decimal places.  For example: "2019-07-20T15:32:17.00000001Z"  This will get you started and you can run a long time before you outgrow this plan.
 
-If your app really needs to deal with time-dialation that arises because the different parts of your operation are at different heights in the Earth's gravity well, fine... just do it.  Just code up whatever time makes sense in your personal twilight zone and stuff it into the transaction record.
+## Numbers
+
+Generally, the API sends and receives financial numeric amounts using a decimal floating point system.  Each number is represented as an integer significand and an integer exponent.  In this way we can _exactly_ store and transmit the numbers without being bothered with round-off errors.  It's the job of a UI to perform non-destructive rounding when necessary.

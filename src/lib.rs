@@ -5,7 +5,9 @@
 pub mod constants;
 pub mod db;
 pub mod dfp;
+pub mod model;
 pub mod routz;
+pub mod schema;
 
 pub mod routes {
 
@@ -34,7 +36,7 @@ pub mod routes {
             v: Semver {   // VERSION
                 major: 2,
                 minor: 3,
-                patch: 0
+                patch: 1
             }
         })
     }
