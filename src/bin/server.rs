@@ -13,12 +13,9 @@ use clap::clap_app;
 use std::env;
 use rocket::config::{Config, Environment};
 
-use juniper::{EmptyMutation, RootNode};
+use juniper::{EmptyMutation, EmptySubscription, RootNode};
 use rocket::response::content;
 use rocket::State;
-use bookwerx_core_rust::db::MyRocketSQLConn;
-
-use std::sync::{Arc, Mutex};
 
 fn main() {
 
@@ -179,7 +176,7 @@ fn main() {
         .attach(D::MyRocketSQLConn::fairing())
         .attach(cors)
         .manage(jdb)
-        .manage(Schema::new(S::Query, EmptyMutation::<M::JunDatabase>::new()))
+        .manage(Schema::new(S::Query, EmptyMutation::<M::JunDatabase>::new(), EmptySubscription::<M::JunDatabase>::new()))
         .mount("/", routes![
             R::index,
 
@@ -236,12 +233,12 @@ fn main() {
         .launch();
 }
 
-type Schema = RootNode<'static, S::Query, EmptyMutation<M::JunDatabase>>;
+type Schema = RootNode<'static, S::Query, EmptyMutation<M::JunDatabase>, EmptySubscription<M::JunDatabase>>;
 
 
 #[rocket::get("/graphql")]
 fn graphiql() -> content::Html<String> {
-    juniper_rocket::graphiql_source("/graphql")
+    juniper_rocket::graphiql_source("/graphql", None)
 }
 
 #[rocket::get("/graphql?<request>")]
@@ -250,7 +247,7 @@ fn get_graphql_handler(
     request: juniper_rocket::GraphQLRequest,
     schema: State<Schema>,
 ) -> juniper_rocket::GraphQLResponse {
-    request.execute(&schema, &context)
+    request.execute_sync(&schema, &context)
 }
 
 
@@ -259,16 +256,6 @@ fn post_graphql_handler(
     context: State<M::JunDatabase>,
     request: juniper_rocket::GraphQLRequest,
     schema: State<Schema>,
-    mut conn: MyRocketSQLConn
 ) -> juniper_rocket::GraphQLResponse {
-
-
-    {
-        let m = &*context.conn;
-        let mut m1 = m.lock().unwrap();
-        *m1 = Some(conn);
-    }
-
-    request.execute(&schema, &context)
-
+    request.execute_sync(&schema, &context)
 }
