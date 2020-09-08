@@ -63,7 +63,7 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         FROM accounts AS ac
         JOIN distributions AS ds ON ds.account_id = ac.id
         JOIN transactions AS tx ON tx.id = ds.transaction_id
-        WHERE ac.id = :account_id
+        WHERE ac.id = :account_isudo d
             AND ac.apikey = :apikey
             {}
             ", time_clause);

@@ -126,7 +126,6 @@ pub struct CategoryShort {
     pub symbol: String,
     pub title: String
 }
-
 #[derive(Clone)]
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)]    // PUT /currencies.

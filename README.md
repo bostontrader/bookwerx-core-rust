@@ -32,7 +32,7 @@ The easiest way to get started is to explore [***bookwerx-ui***](https://github.
 
 Using this UI you can connect to a [publicly visible demonstration server](http://185.183.96.73:3003), request an API key for your own use, and generally put the API to work.  The UI also guides you through a proper sequence of API calls.  For example, you cannot define an account until you have defined the currency that said account will use.  The UI will also show you the API requests that it creates as well as the responses that it receives.
 
-You can also connect to the [GraphQL endpoint](http://185.183.96.73:3003/graphql) at the same server.  This will present a GraphiQL view that you can use to explore the server's GraphQL capabilities.
+You can also connect to the [GraphQL endpoint](http://185.183.96.73:3003/graphql) at the same server.  This will present a GraphiQL view that you can use to explore the server's GraphQL capabilities.  Recall that said endpoint is barely past the hello-world stage, so it is presently of limited usefulness.
 
 You can also send an HTTP POST with a particular GraphQL query:
 ```

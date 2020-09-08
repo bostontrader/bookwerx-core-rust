@@ -35,8 +35,8 @@ pub mod routes {
             url: "https://github.com/bostontrader/bookwerx-core-rust".to_string(),
             v: Semver {   // VERSION
                 major: 2,
-                minor: 3,
-                patch: 1
+                minor: 4,
+                patch: 0
             }
         })
     }

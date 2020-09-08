@@ -1,6 +1,5 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 #[macro_use] extern crate rocket;
-//#[macro_use] extern crate rocket_contrib;
 
 use bookwerx_core_rust::constants as C;
 use bookwerx_core_rust::db as D;
@@ -21,7 +20,7 @@ fn main() {
 
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "2.3.1") // VERSION
+        (version: "2.4.0") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -169,12 +168,17 @@ fn main() {
 
     println!("{:?}", cors);
 
-    let jdb = M::JunDatabase::new();
 
     // 3.4 Finally, launch it
-    rocket::custom(config)
-        .attach(D::MyRocketSQLConn::fairing())
-        .attach(cors)
+    let r = rocket::custom(config)
+        .attach(D::MyRocketSQLConn::fairing());
+
+    // 3.4.1 Get a MySQL connection and hip Juniper to this fact.
+    let c = D::MyRocketSQLConn::get_one(&r);
+    let jdb = M::JunDatabase::new(c);
+
+    // 3.4.2 Finish crankin' it up
+    r.attach(cors)
         .manage(jdb)
         .manage(Schema::new(S::Query, EmptyMutation::<M::JunDatabase>::new(), EmptySubscription::<M::JunDatabase>::new()))
         .mount("/", routes![
@@ -235,7 +239,6 @@ fn main() {
 
 type Schema = RootNode<'static, S::Query, EmptyMutation<M::JunDatabase>, EmptySubscription<M::JunDatabase>>;
 
-
 #[rocket::get("/graphql")]
 fn graphiql() -> content::Html<String> {
     juniper_rocket::graphiql_source("/graphql", None)
@@ -257,5 +260,6 @@ fn post_graphql_handler(
     request: juniper_rocket::GraphQLRequest,
     schema: State<Schema>,
 ) -> juniper_rocket::GraphQLResponse {
+
     request.execute_sync(&schema, &context)
 }
