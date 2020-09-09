@@ -20,17 +20,58 @@ pub struct Query;
 // The root query object of the schema
 impl Query {
 
-    /*
-       Get all distributions for all accounts that are tagged with _all_ categories passed in category_ids.
-       If category_ids is empty then no accounts are relevant and no distributions get returned.
+    // Get a collection of zero or more accounts.
+    fn accounts(&self, database: &JunDatabase) -> String {
+        // 1. Build the basic query string with suitable placeholders for the prepared statement parameters
+        let q = format!(
+            "SELECT id, currency_id, rarity, title
+            FROM accounts "
+        );
+        /*let q = format!(
+            "SELECT amount, amount_exp, `time`, c.symbol AS symbol FROM distributions AS d
+                JOIN transactions AS t on t.id = d.transaction_id
+                JOIN accounts AS a on a.id = d.account_id
+                JOIN currencies AS c on c.id = a.currency_id
+                WHERE account_id =
+                    ( SELECT a.id FROM accounts_categories AS ac
+                      JOIN accounts AS a ON ac.account_id = a.id
+                      WHERE a.apikey = :apikey AND ac.category_id IN(:in_list)
+                      GROUP BY a.id HAVING COUNT(a.id) = {}
+                    )",l);
+*/
+        // 1.3
+        //let mut params = Vec::new();
+        //params.push(api_key);
 
-       This is our first hello-graphql query that generates actual useful output.  As such it is not very well
-       polished.  Be gentle with it.
+        // 1.4 Obtain a connection to the db using deep magic
+        let mut m = database.0.lock().unwrap();
+        let m = m.as_deref_mut().unwrap();
 
-       Returns a String that should be parsable into JSON.
+        // 1.5 Now execute the query
+        //let n: Vec<Rs> = m.prep_exec(q, params).map(|result| {
+            //result.map(|x| x.unwrap()).map(|row| {
+                //let (amount, exp, time, symbol) = rocket_contrib::databases::mysql::from_row(row);
+                //Rs {amount, exp, time, symbol}
+            //}).collect()
+        //}).unwrap();
 
-       curl -X POST -H "Content-Type: application/json" -d '{"query": "{ distributions(categoryIds:[], apiKey:\"catfood\") }"}' http://localhost:3003/graphq
-     */
+        //let serialized = serde_json::to_string(&n).unwrap();
+        //String::from(serialized)
+
+        String::from("[]")
+
+    }
+        /*
+           Get all distributions for all accounts that are tagged with _all_ categories passed in category_ids.
+           If category_ids is empty then no accounts are relevant and no distributions get returned.
+
+           This is our first hello-graphql query that generates actual useful output.  As such it is not very well
+           polished.  Be gentle with it.
+
+           Returns a String that should be parsable into JSON.
+
+           curl -X POST -H "Content-Type: application/json" -d '{"query": "{ distributions(categoryIds:[], apiKey:\"catfood\") }"}' http://localhost:3003/graphq
+         */
 
 
     #[graphql(arguments(category_ids(description = "A list of relevant category ids.")))]
