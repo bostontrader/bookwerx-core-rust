@@ -28,10 +28,16 @@ Setting both time_* params gives us the change in balance during a time period a
 Setting only time_start doesn't seem real useful, but I'm sure somebody can find a need for doing this.
  */
 #[get("/category_dist_sums?<apikey>&<category_id>&<time_start>&<time_stop>&<decorate>")]
-pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, decorate: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponseOld {
-
+pub fn get_category_dist_sums(
+    apikey: &RawStr,
+    category_id: &RawStr,
+    time_start: Option<&RawStr>,
+    time_stop: Option<&RawStr>,
+    decorate: Option<&RawStr>,
+    mut conn: crate::db::MyRocketSQLConn,
+) -> crate::db::ApiResponseOld {
     // 1. Build a vector of sanitized incoming request parameters. We will feed this to the SQL query. While we're here, let's also use this opportunity to build a time filtering clause for the SQL query.
-    let mut params  = Vec::new();
+    let mut params = Vec::new();
 
     // 1.1 We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
     // WARNING! Push these in the same order they are used in the prep_exec function!
@@ -44,23 +50,23 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
 
     match time_start {
         None => match time_stop {
-            None => { },
+            None => {}
             Some(time_stop) => {
                 params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND tx.time <= :time_stop");
             }
-        }
+        },
         Some(time_start) => match time_stop {
-            None =>  {
+            None => {
                 params.push(time_start.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time");
-            },
-            Some(time_stop) =>  {
+            }
+            Some(time_stop) => {
                 params.push(time_start.html_escape().to_mut().clone());
                 params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time AND tx.time <= :time_stop");
             }
-        }
+        },
     }
 
     // 2. Obtain all of the relevant distributions.
@@ -76,45 +82,59 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     // 2.2 Build a subquery to retrieve the relevant account_id, based on the quantity of categories requested.  Can these queries be unified into a single query regardless of the category_cnt?
 
     let acct_sub_query = if category_cnt == 1 {
-        format!("
+        format!(
+            "
             ( SELECT account_id
               FROM accounts_categories
               WHERE category_id = {}
               AND apikey = :apikey
             )
-        ", pcat)
-    } else { // must be > 1
-        format!("
+        ",
+            pcat
+        )
+    } else {
+        // must be > 1
+        format!(
+            "
             ( SELECT account_id
               FROM accounts_categories
               WHERE category_id IN ({})  AND apikey = :apikey
               GROUP BY account_id
               HAVING count(*) = {}
             )
-        ", pcat, category_cnt)
+        ",
+            pcat, category_cnt
+        )
     };
 
-    let q = format!("
+    let q = format!(
+        "
             SELECT account_id, amount, amount_exp
                 FROM distributions AS ds
                 JOIN transactions as tx on tx.id = ds.transaction_id
             WHERE account_id in ( {} )
             {}  ORDER BY account_id
-            ", acct_sub_query, time_clause);
+            ",
+        acct_sub_query, time_clause
+    );
 
-    let vec: Vec<crate::db::BalanceResult> =
-        conn.prep_exec(q, params )
-            .map(|result| {
-                result.map(|x| x.unwrap()).map(|row| {
-                    let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
+    let vec: Vec<crate::db::BalanceResult> = conn
+        .prep_exec(q, params)
+        .map(|result| {
+            result
+                .map(|x| x.unwrap())
+                .map(|row| {
+                    let (account_id, amount, amount_exp) =
+                        rocket_contrib::databases::mysql::from_row(row);
                     crate::db::BalanceResult {
                         account_id,
                         amount,
-                        amount_exp
+                        amount_exp,
                     }
-                }).collect()
-            }).unwrap();
-
+                })
+                .collect()
+        })
+        .unwrap();
 
     // 3. We now have zero or more records to sum.
 
@@ -132,20 +152,23 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
     let mut hm = HashMap::new();
 
     // 3.3 If we have requested decorations we will eventually need an "in clause" of account ids to work with.  It's tempting to build that into this loop now.  Resist the urge.  Doing so makes this needlessly complicated.  It's simple and fast enough to build the in_clause separately.
-    let mut sum: DFP = DFP {amount: 0, exp: 0};
+    let mut sum: DFP = DFP { amount: 0, exp: 0 };
     let mut prior_account_id = 0;
     for v in vec {
-
         if v.account_id != prior_account_id {
-
             // This is the first record of a new account_id
             if prior_account_id == 0 {
 
                 // This is the very first time in the loop. Nothing to do yet.
             } else {
-
                 // This is the first element that has a new account_id. Save the sum from the prior account_id
-                hm.insert(prior_account_id, crate::db::AcctSum { account_id: prior_account_id, sum });
+                hm.insert(
+                    prior_account_id,
+                    crate::db::AcctSum {
+                        account_id: prior_account_id,
+                        sum,
+                    },
+                );
             }
             prior_account_id = v.account_id;
             //sum = DFP { amount: v.amount, exp: v.amount_exp };
@@ -153,17 +176,26 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
         }
 
         // This records account_id is the same as the prior record, so just add the values
-        sum = sum.add(&DFP { amount: v.amount, exp: v.amount_exp });
+        sum = sum.add(&DFP {
+            amount: v.amount,
+            exp: v.amount_exp,
+        });
     }
 
     // 3.3.1 The above loop should have executed at least once so we should have a real v and sum.
     // Now that the iteration is done, we still need to insert the final v and sum into the HashMap.
 
-    hm.insert(prior_account_id, crate::db::AcctSum{ account_id: prior_account_id, sum});
+    hm.insert(
+        prior_account_id,
+        crate::db::AcctSum {
+            account_id: prior_account_id,
+            sum,
+        },
+    );
 
     // 4. We will soon need this.  Is there an easier way to do this?
-    fn to_vec(hm :HashMap<u32, crate::db::AcctSum>) -> Vec<crate::db::AcctSum> {
-        let mut ret_val:Vec<crate::db::AcctSum> = Vec::new();
+    fn to_vec(hm: HashMap<u32, crate::db::AcctSum>) -> Vec<crate::db::AcctSum> {
+        let mut ret_val: Vec<crate::db::AcctSum> = Vec::new();
 
         for (_k, v) in hm {
             ret_val.push(v);
@@ -176,10 +208,10 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
         None => {
             // 5.1 If we have not requested the decorations we can return the HashMap as a Vector as the response now.
             return crate::db::ApiResponseOld {
-                json: json!({"sums": to_vec(hm)}),
+                json: json!({ "sums": to_vec(hm) }),
                 status: Status::Ok,
             };
-        },
+        }
         Some(braw) => {
             // 5.2 There is something passed as the decorate parameter.  Can we parse this to a bool?
             match braw.html_escape().to_mut().clone().parse() {
@@ -189,11 +221,11 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
                     } else {
                         // decorate parsed to an explicit false.  No decorations, just the HashMap.
                         return crate::db::ApiResponseOld {
-                            json: json!({"sums": to_vec(hm)}),
+                            json: json!({ "sums": to_vec(hm) }),
                             status: Status::Ok,
                         };
                     }
-                },
+                }
                 Err(e) => {
                     // Cannot parse to a bool.
                     return crate::db::ApiResponseOld {
@@ -217,62 +249,72 @@ pub fn get_category_dist_sums(apikey: &RawStr, category_id: &RawStr, time_start:
         } else {
             in_clause.push_str(", ");
         }
-        in_clause.push_str(k.to_string().as_str() )
+        in_clause.push_str(k.to_string().as_str())
     }
     in_clause.push_str(")");
 
-
     // 6.2 Now build and execute the SQL to get the decorations.
     // WARNING! The two queries are not atomic.  Contemplate what errors might arise because of this.
-    params  = Vec::new();
+    params = Vec::new();
     params.push(apikey.html_escape().to_mut().clone());
-    let vec: Vec<crate::db::AccountCurrencyDecorations> =
-        conn.prep_exec(format!("
+    let vec: Vec<crate::db::AccountCurrencyDecorations> = conn
+        .prep_exec(
+            format!(
+                "
             SELECT ac.id, ac.title, cu.id as currency_id, cu.symbol
             FROM accounts AS ac
             JOIN currencies AS cu ON ac.currency_id = cu.id
             WHERE ac.apikey = :apikey
             AND ac.id IN {}
-        ", in_clause), params )
-            .map(|result| {
-                result.map(|x| x.unwrap()).map(|row| {
-                    let (account_id, title, currency_id, symbol) = rocket_contrib::databases::mysql::from_row(row);
+        ",
+                in_clause
+            ),
+            params,
+        )
+        .map(|result| {
+            result
+                .map(|x| x.unwrap())
+                .map(|row| {
+                    let (account_id, title, currency_id, symbol) =
+                        rocket_contrib::databases::mysql::from_row(row);
                     crate::db::AccountCurrencyDecorations {
                         account_id,
                         title,
                         currency_id,
-                        symbol
+                        symbol,
                     }
-                }).collect()
-            }).unwrap();
+                })
+                .collect()
+        })
+        .unwrap();
 
     // 7.3 Now iterate over all of the Decorations, if any and build the final result.
     let mut ret_val = Vec::new();
     for d in vec {
-            match hm.get(&d.account_id) {
-                Some(&v) => {
-                    let n = crate::db::BalanceResultDecorated {
-                        account: crate::db::AccountCurrency {
-                            account_id: d.account_id,
-                            title: d.title,
-                            currency: crate::db::CurrencySymbol {
-                                currency_id: d.currency_id,
-                                symbol: d.symbol,
-                            },
+        match hm.get(&d.account_id) {
+            Some(&v) => {
+                let n = crate::db::BalanceResultDecorated {
+                    account: crate::db::AccountCurrency {
+                        account_id: d.account_id,
+                        title: d.title,
+                        currency: crate::db::CurrencySymbol {
+                            currency_id: d.currency_id,
+                            symbol: d.symbol,
                         },
-                        sum: v.sum
-                    };
-                    ret_val.push(n);
-                },
-                _ => {
-                    // This should never happen. Contemplate why.
-                    panic!("max fubar error");
-                }
+                    },
+                    sum: v.sum,
+                };
+                ret_val.push(n);
+            }
+            _ => {
+                // This should never happen. Contemplate why.
+                panic!("max fubar error");
             }
         }
-
-        return crate::db::ApiResponseOld {
-            json: json!({"sums": ret_val}),
-            status: Status::Ok,
-        }
     }
+
+    return crate::db::ApiResponseOld {
+        json: json!({ "sums": ret_val }),
+        status: Status::Ok,
+    };
+}

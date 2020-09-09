@@ -11,9 +11,9 @@ pub struct MyRocketSQLConn(mysql::Conn);
 
 // This is one possible way to get the connection object out of here.
 //impl MyRocketSQLConn {
-    //pub fn get_conn(&self) {
-        //let m1 = &*self.0;
-    //}
+//pub fn get_conn(&self) {
+//let m1 = &*self.0;
+//}
 //}
 
 /*
@@ -30,16 +30,15 @@ many derives.
  */
 
 // 1. The basic data formats.
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /accounts.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /accounts.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Account {
     pub id: u32,
     pub apikey: String,
     pub currency_id: u32,
     pub rarity: u8,
-    pub title: String
+    pub title: String,
 }
 
 // Account joined with category and currency. This is an intermediate representation.
@@ -52,130 +51,125 @@ pub struct AccountDenormalized {
     pub cur_title: String,
     pub ac_category_id: u32,
     pub cat_symbol: String,
-    pub cat_title: String
+    pub cat_title: String,
 }
 
 // Final form to send as a response.
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
 pub struct AccountJoined {
     pub id: u32,
     pub apikey: String,
     pub currency: CurrencyShort1,
     pub rarity: u8,
     pub title: String,
-    pub categories: Vec<Acctcat2>
+    pub categories: Vec<Acctcat2>,
 }
 
-#[derive(FromForm)]    // POST /accounts.
+#[derive(FromForm)] // POST /accounts.
 pub struct AccountShort {
     pub apikey: String,
     pub currency_id: u32,
     pub rarity: u8,
-    pub title: String
+    pub title: String,
 }
 
 pub struct AccountShort1 {
     pub currency_id: u32,
-    pub title: String
+    pub title: String,
 }
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /acctcats.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /acctcats.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Acctcat {
     pub id: u32,
     pub apikey: String,
     pub account_id: u32,
-    pub category_id: u32
+    pub category_id: u32,
 }
 
-#[derive(FromForm)]    // POST /acctcats.
+#[derive(FromForm)] // POST /acctcats.
 pub struct AcctcatShort {
     pub apikey: String,
     pub account_id: u32,
-    pub category_id: u32
+    pub category_id: u32,
 }
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Acctcat2 {
-    pub category_symbol: String
+    pub category_symbol: String,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-pub struct Apikey { pub apikey: String }
+pub struct Apikey {
+    pub apikey: String,
+}
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /categories.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /categories.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Category {
     pub id: u32,
     pub apikey: String,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
-#[derive(FromForm)]    // POST /categories.
+#[derive(FromForm)] // POST /categories.
 pub struct CategoryShort {
     pub apikey: String,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /currencies.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /currencies.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Currency {
     pub id: u32,
     pub apikey: String,
     pub rarity: u8,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
-#[derive(FromForm)]    // POST /currencies.
+#[derive(FromForm)] // POST /currencies.
 pub struct CurrencyShort {
     pub apikey: String,
     pub rarity: u8,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
 pub struct CurrencyShort1 {
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
 pub struct CurrencyShort2 {
     pub id: u32,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /distributions.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /distributions.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Distribution {
     pub id: u32,
     pub account_id: u32,
     pub amount: i64,
     pub amount_exp: i8,
     pub apikey: String,
-    pub transaction_id: u32
+    pub transaction_id: u32,
 }
 
 // This struct supports the ability to easily produce a list of distributions for a particular account.
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct DistributionJoined {
     pub id: u32,
     pub tid: u32,
@@ -185,36 +179,36 @@ pub struct DistributionJoined {
     pub apikey: String,
     pub account_title: String,
     pub tx_notes: String,
-    pub tx_time: String
+    pub tx_time: String,
 }
 
-#[derive(FromForm)]    // POST /distributions.
+#[derive(FromForm)] // POST /distributions.
 pub struct DistributionShort {
     pub account_id: u32,
     pub amount: i64,
     pub amount_exp: i8,
     pub apikey: String,
-    pub transaction_id: u32
+    pub transaction_id: u32,
 }
 
 // A linter will return a collection of id.
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct LinterShort {
     pub id: u32,
-    pub title: String
+    pub title: String,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct LinterLong {
     pub id: u32,
     pub symbol: String,
-    pub title: String
+    pub title: String,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Ping {
     pub about: String,
     pub url: String,
@@ -223,40 +217,39 @@ pub struct Ping {
 
 // Semantic version
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Semver {
     pub major: u16,
     pub minor: u16,
     pub patch: u16,
 }
 
-#[derive(Clone)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(FromForm)]    // PUT /transactions.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /transactions.
+#[derive(Serialize)] // We send these as a json result.
 pub struct Transaction {
     pub id: u32,
     pub apikey: String,
     pub notes: String,
-    pub time: String
+    pub time: String,
 }
 
-#[derive(FromForm)]    // POST /transactions.
+#[derive(FromForm)] // POST /transactions.
 pub struct TransactionShort {
     pub apikey: String,
     pub notes: String,
-    pub time: String
+    pub time: String,
 }
 
 /*
 2. account_dist_sum and category_dist_sums produce a variety of outputs related to the sum of all distributions for accounts, as well as optional decorations.
  */
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct AccountCurrency {
     pub account_id: u32,
     pub title: String,
-    pub currency: CurrencySymbol
+    pub currency: CurrencySymbol,
 }
 
 pub struct AccountCurrencyDecorations {
@@ -266,9 +259,8 @@ pub struct AccountCurrencyDecorations {
     pub symbol: String,
 }
 
-#[derive(Clone, Copy)]
-#[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Clone, Copy, Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
 pub struct AcctSum {
     pub account_id: u32,
     pub sum: DFP,
@@ -281,115 +273,115 @@ pub struct BalanceResult {
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct BalanceResultDecorated {
     pub account: AccountCurrency,
-    pub sum: DFP
+    pub sum: DFP,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub struct CurrencySymbol {
     pub currency_id: u32,
-    pub symbol: String
+    pub symbol: String,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 pub struct DFPResult {
-    pub sum: DFP
+    pub sum: DFP,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 pub struct Sums {
-    pub sums: Vec<AcctSum>
+    pub sums: Vec<AcctSum>,
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
 pub struct SumsDecorated {
-    pub sums: Vec<BalanceResultDecorated>
+    pub sums: Vec<BalanceResultDecorated>,
 }
 
 // 3. The response types
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub enum APIResponse {
     Info(String),
     LastInsertId(u64),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetAccountResponse {
     One(Account),
     Many(Vec<AccountJoined>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetAcctcatResponse {
     One(Acctcat),
     Many(Vec<Acctcat>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetCategoryResponse {
     One(Category),
     Many(Vec<Category>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetCurrencyResponse {
     One(Currency),
     Many(Vec<Currency>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetDistributionResponse {
     One(Distribution),
     Many(Vec<Distribution>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetDistributionJoinedResponse {
     // One(Distribution),
     Many(Vec<DistributionJoined>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 #[serde(untagged)]
 pub enum GetTransactionResponse {
     One(Transaction),
     Many(Vec<Transaction>),
-    Error(String)
+    Error(String),
 }
 
 #[derive(Deserialize)] // A test parses a response into this struct.
-#[derive(Serialize)]   // We send these as a json result.
+#[derive(Serialize)] // We send these as a json result.
 pub enum PostApikeysResponse {
-    #[serde(rename="apikey")]
+    #[serde(rename = "apikey")]
     Apikey(String),
-    Error(String)
+    Error(String),
 }
 
 pub struct ApiResponseOld {
     pub json: JsonValue,
-    pub status: Status
+    pub status: Status,
 }

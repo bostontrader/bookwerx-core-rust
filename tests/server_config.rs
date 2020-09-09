@@ -52,331 +52,331 @@ const TEST_CONN_STR: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
 const TEST_DBNAME: &str = "bookwerx-core-rust-test";
 //const TEST_MODE: &str = "test";
 
-
 #[test] // 1.1
 fn bind_ip_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     cmd.assert()
-        .stdout(predicate::str::contains("Fatal error: No binding IP address is available."))
+        .stdout(predicate::str::contains(
+            "Fatal error: No binding IP address is available.",
+        ))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 1.2
 fn bind_ip_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP);
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to IP address [{}], as set from the environment.", TEST_BIND_IP)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to IP address [{}], as set from the environment.",
+            TEST_BIND_IP
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 1.2
 fn bind_ip_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     cmd.arg(format!("--{}", C::BIND_IP_KEY_CLI))
         .arg(TEST_BIND_IP);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to IP address [{}], as set from the command line.", TEST_BIND_IP)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to IP address [{}], as set from the command line.",
+            TEST_BIND_IP
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 1.3
-// The value set in the command line should override whatever is in the environment.
+        // The value set in the command line should override whatever is in the environment.
 fn bind_ip_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP);
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP);
 
     cmd.arg(format!("--{}", C::BIND_IP_KEY_CLI))
         .arg(TEST_BIND_IP);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to IP address [{}], as set from the command line.", TEST_BIND_IP)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to IP address [{}], as set from the command line.",
+            TEST_BIND_IP
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 2.1
 fn bind_port_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP);
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP);
 
     cmd.assert()
-        .stdout(predicate::str::contains("Fatal error: No binding port is available."))
+        .stdout(predicate::str::contains(
+            "Fatal error: No binding port is available.",
+        ))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 2.2
 fn bind_port_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
         // This is what we're really testing
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT);
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to port [{}], as set from the environment.", TEST_BIND_PORT)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to port [{}], as set from the environment.",
+            TEST_BIND_PORT
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 2.2
 fn bind_port_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
         // This is what we're really testing
         .arg(format!("--{}", C::BIND_PORT_KEY_CLI))
         .arg(TEST_BIND_PORT);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to port [{}], as set from the command line.", TEST_BIND_PORT)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to port [{}], as set from the command line.",
+            TEST_BIND_PORT
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 2.3
-// The value set in the command line should override whatever is in the environment.
+        // The value set in the command line should override whatever is in the environment.
 fn bind_port_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
         // This is what we're really testing
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
         .arg(format!("--{}", C::BIND_PORT_KEY_CLI))
         .arg(TEST_BIND_PORT);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Rocket will bind to port [{}], as set from the command line.", TEST_BIND_PORT)))
+        .stdout(predicate::str::contains(format!(
+            "Rocket will bind to port [{}], as set from the command line.",
+            TEST_BIND_PORT
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 3.1
 fn conn_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT);
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT);
 
     cmd.assert()
-        .stdout(predicate::str::contains("Fatal error: No db connection string is available."))
+        .stdout(predicate::str::contains(
+            "Fatal error: No db connection string is available.",
+        ))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 3.2
 fn conn_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
         // This is what we're really testing
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR);
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Accessing the db via connection string [{}], as set from the environment.", TEST_CONN_STR)))
+        .stdout(predicate::str::contains(format!(
+            "Accessing the db via connection string [{}], as set from the environment.",
+            TEST_CONN_STR
+        )))
         //.stdout(predicate::str::contains(format!("Fatal error: No database specified.")))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 3.2
 fn conn_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
         // This is what we're really testing
         .arg(format!("--{}", C::CONN_KEY_CLI))
         .arg(TEST_CONN_STR);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Accessing the db via connection string [{}], as set from the command line.", TEST_CONN_STR)))
+        .stdout(predicate::str::contains(format!(
+            "Accessing the db via connection string [{}], as set from the command line.",
+            TEST_CONN_STR
+        )))
         //.stdout(predicate::str::contains(format!("Fatal error: No database specified.")))
         .failure();
 
     Ok(())
 }
 
-
 #[test] // 3.3
-// The value set in the command line should override whatever is in the environment.
+        // The value set in the command line should override whatever is in the environment.
 fn conn_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
         // This is what we're really testing
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR)
         .arg(format!("--{}", C::CONN_KEY_CLI))
         .arg(TEST_CONN_STR);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Accessing the db via connection string [{}], as set from the command line.", TEST_CONN_STR)))
+        .stdout(predicate::str::contains(format!(
+            "Accessing the db via connection string [{}], as set from the command line.",
+            TEST_CONN_STR
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 4.1
 fn dbname_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR);
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR);
 
     cmd.assert()
-        .stdout(predicate::str::contains("Fatal error: No db name is available."))
+        .stdout(predicate::str::contains(
+            "Fatal error: No db name is available.",
+        ))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 4.2
 fn dbname_no_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR)
         // This is what we're really testing
-        .env(C::DBNAME_KEY_ENV,TEST_DBNAME);
+        .env(C::DBNAME_KEY_ENV, TEST_DBNAME);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Using db [{}], as set from the environment.", TEST_DBNAME)))
+        .stdout(predicate::str::contains(format!(
+            "Using db [{}], as set from the environment.",
+            TEST_DBNAME
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 4.2
 fn dbname_with_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR)
         // This is what we're really testing
         .arg(format!("--{}", C::DBNAME_KEY_CLI))
         .arg(TEST_DBNAME);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Using db [{}], as set from the command line.", TEST_DBNAME)))
+        .stdout(predicate::str::contains(format!(
+            "Using db [{}], as set from the command line.",
+            TEST_DBNAME
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 4.3
-// The value set in the command line should override whatever is in the environment.
+        // The value set in the command line should override whatever is in the environment.
 fn dbname_with_cli_with_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR)
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR)
         // This is what we're really testing
-        .env(C::DBNAME_KEY_ENV,"example-db-name-from-env")
-
+        .env(C::DBNAME_KEY_ENV, "example-db-name-from-env")
         .arg(format!("--{}", C::DBNAME_KEY_CLI))
         .arg(TEST_DBNAME);
 
     cmd.assert()
-        .stdout(predicate::str::contains(format!("Using db [{}], as set from the command line.", TEST_DBNAME)))
+        .stdout(predicate::str::contains(format!(
+            "Using db [{}], as set from the command line.",
+            TEST_DBNAME
+        )))
         .failure();
 
     Ok(())
 }
-
 
 #[test] // 5.1
 fn mode_no_cli_no_env() -> Result<(), Box<dyn std::error::Error>> {
-
     let mut cmd = Command::cargo_bin(CARGO_BIN)?;
 
     // This is necessary to make the test proceed far enough to test what we want.
-    cmd.env(C::BIND_IP_KEY_ENV,TEST_BIND_IP)
-        .env(C::BIND_PORT_KEY_ENV,TEST_BIND_PORT)
-        .env(C::CONN_KEY_ENV,TEST_CONN_STR)
-        .env(C::DBNAME_KEY_ENV,TEST_DBNAME);
-
+    cmd.env(C::BIND_IP_KEY_ENV, TEST_BIND_IP)
+        .env(C::BIND_PORT_KEY_ENV, TEST_BIND_PORT)
+        .env(C::CONN_KEY_ENV, TEST_CONN_STR)
+        .env(C::DBNAME_KEY_ENV, TEST_DBNAME);
 
     cmd.assert()
-        .stdout(predicate::str::contains("Fatal error: No operating mode is available."))
+        .stdout(predicate::str::contains(
+            "Fatal error: No operating mode is available.",
+        ))
         .failure();
 
     Ok(())

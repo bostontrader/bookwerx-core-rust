@@ -7,10 +7,9 @@ use std::io::prelude::*;
 use std::path::Path;
 
 fn main() {
-
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.1.0") // VERSION
+        (version: "0.2.0") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
@@ -18,28 +17,32 @@ fn main() {
         (@arg seed: -s --seed +takes_value "Initialize the db using the given seed file.")
     ).get_matches();
 
-
     // 2. Obtain the configuration arguments passed via command line or environment, if any.
 
     // 2.1 conn_value.  Must have.
     let conn_value;
     match cli_matcher.value_of(C::CONN_KEY_CLI) {
         Some(_result) => {
-            println!("Accessing the db via connection string [{}], as set from the command line.", _result);
+            println!(
+                "Accessing the db via connection string [{}], as set from the command line.",
+                _result
+            );
             conn_value = _result.to_string();
         }
-        None =>
-            match env::var(C::CONN_KEY_ENV) {
-                Ok(_result) => {
-                    println!("Accessing the db via connection string [{}], as set from the environment.", _result);
-                    conn_value = _result;
-                }
-
-                Err(_) => {
-                    println!("Fatal error: No db connection string is available.");
-                    ::std::process::exit(1);
-                }
+        None => match env::var(C::CONN_KEY_ENV) {
+            Ok(_result) => {
+                println!(
+                    "Accessing the db via connection string [{}], as set from the environment.",
+                    _result
+                );
+                conn_value = _result;
             }
+
+            Err(_) => {
+                println!("Fatal error: No db connection string is available.");
+                ::std::process::exit(1);
+            }
+        },
     }
 
     // 2.2 dbname_value.  Must have.
@@ -49,42 +52,44 @@ fn main() {
             println!("Using db [{}], as set from the command line.", _result);
             dbname_value = _result.to_string();
         }
-        None =>
-            match env::var(C::DBNAME_KEY_ENV) {
-                Ok(_result) => {
-                    println!("Using db [{}], as set from the environment.", _result);
-                    dbname_value = _result;
-                }
-
-                Err(_) => {
-                    println!("Fatal error: No db name is available.");
-                    ::std::process::exit(1);
-                }
+        None => match env::var(C::DBNAME_KEY_ENV) {
+            Ok(_result) => {
+                println!("Using db [{}], as set from the environment.", _result);
+                dbname_value = _result;
             }
-    }
 
+            Err(_) => {
+                println!("Fatal error: No db name is available.");
+                ::std::process::exit(1);
+            }
+        },
+    }
 
     // 2.3 See file name (seed_file).  Must have.
     let seed_file;
     match cli_matcher.value_of(C::SEED_KEY_CLI) {
         Some(_result) => {
-            println!("Initializing the db with seed file [{}], as set from the command line.", _result);
+            println!(
+                "Initializing the db with seed file [{}], as set from the command line.",
+                _result
+            );
             seed_file = _result.to_string();
         }
-        None =>
-            match env::var(C::SEED_KEY_ENV) {
-                Ok(_result) => {
-                    println!("Initializing the db with seed file [{}], as set from the environment.", _result);
-                    seed_file = _result;
-                }
-
-                Err(_) => {
-                    println!("Fatal error: No seed file is available.");
-                    ::std::process::exit(1);
-                }
+        None => match env::var(C::SEED_KEY_ENV) {
+            Ok(_result) => {
+                println!(
+                    "Initializing the db with seed file [{}], as set from the environment.",
+                    _result
+                );
+                seed_file = _result;
             }
-    }
 
+            Err(_) => {
+                println!("Fatal error: No seed file is available.");
+                ::std::process::exit(1);
+            }
+        },
+    }
 
     // 3. A seed file is available so now try to read it.
     // Create a path to the desired file
@@ -98,7 +103,7 @@ fn main() {
         Err(why) => {
             println!("Couldn't open [{}]: {}", display, why.to_string());
             ::std::process::exit(1);
-        },
+        }
     };
 
     // Read the file contents into a string.
@@ -110,7 +115,10 @@ fn main() {
                 Ok(mut _conn) => {
                     //println!("Connected to [{}]", conn_string);
                     // Now wipe the db and re-init.
-                    match _conn.query(format!("DROP DATABASE IF EXISTS `{0}`; CREATE DATABASE `{0}`;", dbname_value)) {
+                    match _conn.query(format!(
+                        "DROP DATABASE IF EXISTS `{0}`; CREATE DATABASE `{0}`;",
+                        dbname_value
+                    )) {
                         Ok(_) => {
                             println!("drop and create success");
                         }
@@ -128,7 +136,9 @@ fn main() {
                             println!("The seed has germinated.");
                         }
                         Err(_x) => {
-                            println!("The seed file does not contain valid SQL.  Does not compute.");
+                            println!(
+                                "The seed file does not contain valid SQL.  Does not compute."
+                            );
                             ::std::process::exit(1);
                         }
                     };

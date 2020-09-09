@@ -1,10 +1,11 @@
 // RUST_BACKTRACE=1 RUST_TEST_THREADS=1 cargo test --test kahuna-grande
 
 #![feature(proc_macro_hygiene, decl_macro)]
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-mod accounts;
 mod account_dist_sum;
+mod accounts;
 mod acctcats;
 mod apikey;
 mod categories;
@@ -33,7 +34,7 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Test the ping
     let mut response = client.get("/").dispatch();
     assert_eq!(response.status(), Status::Ok);
-    let _ :D::Ping = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
+    let _: D::Ping = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
 
     // 2. We need two API keys.  Because we need to run the tests twice, once for each key, to ensure that the records stay separate.
     let apikey1: String = apikey::apikey(&client);
@@ -43,11 +44,9 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     kahuna_grande(&client, &apikey2);
 
     Ok(())
-
 }
 
 fn kahuna_grande(client: &Client, apikey: &String) {
-
     // Test in this order in order to accommodate referential integrity
 
     // QTL | Quatloo
@@ -104,18 +103,24 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let transactions = transactions::transactions(&client, &apikey);
     let distributions = distributions::distributions(&client, &apikey, &accounts, &transactions);
 
-
     linter::linter(&client, &apikey);
     let _ = account_dist_sum::account_dist_sum(&client, &apikey, &accounts);
     let _ = category_dist_sums::category_dist_sums(&client, &apikey, &categories);
 
     // Now try to delete things.  Ensure that referential integrity constraints prevent inappropriate deletions.
-    deletor::deletor(&client, &apikey, &accounts, &acctcats, &categories, &currencies, &distributions, &transactions);
-
+    deletor::deletor(
+        &client,
+        &apikey,
+        &accounts,
+        &acctcats,
+        &categories,
+        &currencies,
+        &distributions,
+        &transactions,
+    );
 }
 
 fn startup() -> Client {
-
     // 1. Build a full connection string of URL to the db server, along with the name of the db to use.
     let mut full_conn = String::new();
     full_conn.push_str(C::TEST_CONN);
@@ -133,63 +138,59 @@ fn startup() -> Client {
         .address(C::TEST_BIND_IP)
         .port(C::TEST_BIND_PORT)
         .extra("databases", hm_outer)
-        .finalize().unwrap();
+        .finalize()
+        .unwrap();
 
     // 4. Now crank up Rocket
     let rocket = rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
-        .mount("/", routes![
-            R::index,
-
-            Z::account::delete_account,
-            Z::account::get_account,
-            Z::get_account_dist_sum::get_account_dist_sum,
-            Z::account::get_accounts,
-            Z::account::post_account,
-            Z::account::put_account,
-
-            Z::acctcat::delete_acctcat,
-            Z::acctcat::get_acctcat,
-            Z::acctcat::get_acctcats_for_category,
-            Z::acctcat::post_acctcat,
-            Z::acctcat::put_acctcat,
-
-            R::post_apikey,
-
-            Z::category::delete_category,
-            Z::category::get_category,
-            Z::category::get_categories,
-            Z::category::get_category_bysym,
-            Z::get_category_dist_sums::get_category_dist_sums,
-            Z::category::post_category,
-            Z::category::put_category,
-
-            Z::currency::delete_currency,
-            Z::currency::get_currency,
-            Z::currency::get_currencies,
-            Z::currency::post_currency,
-            Z::currency::put_currency,
-
-            Z::distribution::delete_distribution,
-            Z::distribution::get_distribution,
-            Z::distribution::get_distributions,
-            Z::distribution::get_distributions_for_account,
-            Z::distribution::get_distributions_for_tx,
-            Z::distribution::post_distribution,
-            Z::distribution::put_distribution,
-
-            Z::get_linter_accounts::get_linter_accounts,
-            Z::get_linter_categories::get_linter_categories,
-            Z::get_linter_currencies::get_linter_currencies,
-
-            Z::transaction::delete_transaction,
-            Z::transaction::get_transaction,
-            Z::transaction::get_transactions,
-            Z::transaction::post_transaction,
-            Z::transaction::put_transaction
-        ]);
+        .mount(
+            "/",
+            routes![
+                R::index,
+                Z::account::delete_account,
+                Z::account::get_account,
+                Z::get_account_dist_sum::get_account_dist_sum,
+                Z::account::get_accounts,
+                Z::account::post_account,
+                Z::account::put_account,
+                Z::acctcat::delete_acctcat,
+                Z::acctcat::get_acctcat,
+                Z::acctcat::get_acctcats_for_category,
+                Z::acctcat::post_acctcat,
+                Z::acctcat::put_acctcat,
+                R::post_apikey,
+                Z::category::delete_category,
+                Z::category::get_category,
+                Z::category::get_categories,
+                Z::category::get_category_bysym,
+                Z::get_category_dist_sums::get_category_dist_sums,
+                Z::category::post_category,
+                Z::category::put_category,
+                Z::currency::delete_currency,
+                Z::currency::get_currency,
+                Z::currency::get_currencies,
+                Z::currency::post_currency,
+                Z::currency::put_currency,
+                Z::distribution::delete_distribution,
+                Z::distribution::get_distribution,
+                Z::distribution::get_distributions,
+                Z::distribution::get_distributions_for_account,
+                Z::distribution::get_distributions_for_tx,
+                Z::distribution::post_distribution,
+                Z::distribution::put_distribution,
+                Z::get_linter_accounts::get_linter_accounts,
+                Z::get_linter_categories::get_linter_categories,
+                Z::get_linter_currencies::get_linter_currencies,
+                Z::transaction::delete_transaction,
+                Z::transaction::get_transaction,
+                Z::transaction::get_transactions,
+                Z::transaction::post_transaction,
+                Z::transaction::put_transaction
+            ],
+        );
 
     // 5. Build a client to talk to our instance of Rocket
     let client = Client::new(rocket).expect("valid rocket instance");
-    return client
+    return client;
 }

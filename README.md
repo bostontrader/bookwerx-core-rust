@@ -4,13 +4,11 @@
 [![codecov](https://codecov.io/gh/bostontrader/bookwerx-core-rust/branch/master/graph/badge.svg)](https://codecov.io/gh/bostontrader/bookwerx-core-rust)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
-The purpose of ***bookwerx-core*** is to provide an API that supports multi-currency
+The purpose of ***bookwerx-core*** is to provide a RESTful API that supports multi-currency
  bookkeeping, using the double-entry bookkeeping model, slightly adapted to squeeze 
  in multiple currencies.  
  
-At this time the API is primarily RESTful.  However, this is proving to be too tedious to deal with because of the proliferation of different queries and selection criteria that actual requires.  We have therefore established a minimal GraphQL endpoint as well.  Said endpoint is presently at the hello-world stage but it's humble step in the right direction.
- 
- ***bookwerx-core*** is written using [the rust programming language.](https://www.rust-lang.org), It uses [rocket](https://rocket.rs) as its web server with [MySQL](https://www.mysql.com) for... you know what MySQL is for.  Finally, it uses [Juniper](https://github.com/graphql-rust/juniper) as the GraphQL library.
+ ***bookwerx-core*** is written using [the rust programming language.](https://www.rust-lang.org), It uses [rocket](https://rocket.rs) as its web server with [MySQL](https://www.mysql.com) for... you know what MySQL is for.
 
 Any application that deals with "money" (fiat, precious metals, cryptocoins) will
 quickly encounter the need for bookkeeping.  Rolling your own methods is, as usual,
@@ -31,15 +29,6 @@ such as accounts, currencies, and transactions.
 The easiest way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an [example UI](http://185.183.96.73:3005/) that demonstrates the API interaction with ***bookwerx-core***.
 
 Using this UI you can connect to a [publicly visible demonstration server](http://185.183.96.73:3003), request an API key for your own use, and generally put the API to work.  The UI also guides you through a proper sequence of API calls.  For example, you cannot define an account until you have defined the currency that said account will use.  The UI will also show you the API requests that it creates as well as the responses that it receives.
-
-You can also connect to the [GraphQL endpoint](http://185.183.96.73:3003/graphql) at the same server.  This will present a GraphiQL view that you can use to explore the server's GraphQL capabilities.  Recall that said endpoint is barely past the hello-world stage, so it is presently of limited usefulness.
-
-You can also send an HTTP POST with a particular GraphQL query:
-```
-export SERVER=http://localhost:3003/graphql
-curl -X POST -H "Content-Type: application/json" -d '{"query": "{ hello }"}' $SERVER
-curl -X POST -H "Content-Type: application/json" -d '{"query": "{ currencies }"}' $SERVER
-```
 
 ## Installation
 
@@ -112,24 +101,26 @@ BCR_MODE - Run the server in whatever mode.
 
 Although **bookwerx-core-rust** is able to drop and rebuild the db from an initial seed, this is a minimal thing.  There are a variety of  settings that you might want to tweak, such as character sets and collation, but the reseeding process does not deal with any of that.  So you may need to examine the configuration of your MySQL server to get the particular settings that you want.
 
-## Rust-Rocket-Juniper-MySQL Integration
+## REST vs GraphQL
 
-There are numerous examples of integrating the Juniper GraphQL library with the Rocket webserver.  Unfortunately said examples use contrived toy databases to do their thing.  Real world use frequently requires the use of a db connection object of some sort.  Injecting said object into the Juniper library proved to be a difficult thing to do.  But we've got that beat now so hopefully our code can serve as a useful example for the next hapless soul trapped in this tarpit.
+In this project we have a choice between using a RESTful API and GraphQL.  Although GraphQL is an interesting contender, after the smoke settled, only the RESTful API emerged from thunderdome.
 
-The basic issue is that... using MySQL as an example...
+One major problem with RESTful APIs is that there tends to be a proliferation of endpoints and input parameters in order to accommodate real-world usage.  Naming these things and managing them generally is a tedious (but tractable) exercise.  These woes led us to try using GraphQL.  Unfortunately doing so proved to be a disappointment.  
 
-1. Rocket obtains a connection to the db via it's [own methods](https://rocket.rs/v0.4/guide/state/#databases) which uses a "fairing" and the .attach method, but is documented under "state".  Read the instructions carefully, study the examples, and work your way through it and you can do this.  This is not _just_ a matter of code, it's also an issue of how to inject db connection configuration.
+We encountered the following general intractable issues:
 
-2. Juniper's contortions include the creation of a Database object that it feeds into a GraphQL query which ultimately does the work.  The Database object is a great place to put contrived toy example databases, but it alone is not sufficient to connect to MySQL.
+* How can we efficiently execute the GraphQL queries?  Doing so requires some connection to the underlying MySQL db.  And doing that requires that we translate GraphQL into MySQL.  This is easier said than done.
 
-3. Rocket's db connection object and Juniper's Database object can both be injected into the route handler for GraphQL.  That's a promising lead.  So all we have to do is create a field of Juniper's Database struct to store the database connection from Rocket, right?  You're barking up the right tree but you're not there yet.
+* The entire GraphQL ecosystem is generally too complicated for our usage.  A lot of it is very sophisticated and impressive but it's generally tainted by low quality documentation.  Especially the very limited products available for Rust.  Going beyond contrived getting-started examples is too difficult and docs.rs style reference is just not useful.  Consider temptation to dissect a product's parser in order to use it as a red flag.
 
-4. The basic problem is that Juniper's Database object is [immutable for reasons of thread safety](https://github.com/graphql-rust/juniper/issues/5).  One answer is to create the field for the connection in Juniper's Database object, but wrap it thus Arc<Mutex<Option<MyRocketSQLConn>>>  Once you know the secret it seems so easy and obvious.
+We have no wish to bash GraphQL or any of the impressive products that deal with it.  We leave this note here as an archaeological relic so that our progeny and successors can (however unlikely) possibly learn from history and avoid the mistakes of their ancestors.  Perhaps in their time, after their heads have been thawed and their bodies regenerated, they will have access to easier-to-use GraphQL -> SQL tooling.
+
+But until and unless that happens, soldiering on and dealing with the admittedly tedious RESTful managerial issues is tractable and still the easiest path forward for this particular project.
 
 
 ## Dates and Times
 
-Dealing with dates and times is a bottomless pit of complexity.  I'll make this easier for everybody involved by promulgating the following policy:
+Dealing with dates and times is a bottomless pit of complexity.  We will make this easier for everybody involved by promulgating the following policy:
 
 A transaction occurs at a single instant in time with said time recorded as any string format suitable to your app.
 

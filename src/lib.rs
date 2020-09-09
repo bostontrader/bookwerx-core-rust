@@ -5,9 +5,7 @@
 pub mod constants;
 pub mod db;
 pub mod dfp;
-pub mod model;
 pub mod routz;
-pub mod schema;
 
 pub mod routes {
 
@@ -33,26 +31,26 @@ pub mod routes {
         Json(Ping {
             about: "bookwerx-core-rust".to_string(),
             url: "https://github.com/bostontrader/bookwerx-core-rust".to_string(),
-            v: Semver {   // VERSION
+            v: Semver {
+                // VERSION
                 major: 0,
-                minor: 1,
-                patch: 0
-            }
+                minor: 2,
+                patch: 0,
+            },
         })
     }
 
     #[rocket::post("/apikeys")]
     pub fn post_apikey(mut conn: MyRocketSQLConn) -> Json<PostApikeysResponse> {
-
-        use rand::{thread_rng, Rng};
         use rand::distributions::Alphanumeric;
+        use rand::{thread_rng, Rng};
 
-        let rand_string: String = thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(10)
-            .collect();
+        let rand_string: String = thread_rng().sample_iter(&Alphanumeric).take(10).collect();
 
-        match conn.prep_exec(format!("INSERT INTO apikeys (apikey) VALUES ('{}')",rand_string),()) {
+        match conn.prep_exec(
+            format!("INSERT INTO apikeys (apikey) VALUES ('{}')", rand_string),
+            (),
+        ) {
             Ok(_) => Json(PostApikeysResponse::Apikey(rand_string)),
             Err(err) => Json(PostApikeysResponse::Error(err.to_string())),
         }

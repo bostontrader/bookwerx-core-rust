@@ -23,10 +23,15 @@ Setting both time_* params gives us the change in balance during a time period a
 Setting only time_start doesn't seem real useful, but I'm sure somebody can find a need for doing this.
  */
 #[get("/account_dist_sum?<apikey>&<account_id>&<time_start>&<time_stop>")]
-pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Option<&RawStr>, time_stop: Option<&RawStr>, mut conn: crate::db::MyRocketSQLConn) -> crate::db::ApiResponseOld {
-
+pub fn get_account_dist_sum(
+    apikey: &RawStr,
+    account_id: &RawStr,
+    time_start: Option<&RawStr>,
+    time_stop: Option<&RawStr>,
+    mut conn: crate::db::MyRocketSQLConn,
+) -> crate::db::ApiResponseOld {
     // This is a vector of parameters that we recover from the request and feed into our sql statement
-    let mut params  = Vec::new();
+    let mut params = Vec::new();
 
     // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
     // WARNING! Push these in the same order they are used in the prep_exec function!
@@ -39,26 +44,27 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
 
     match time_start {
         None => match time_stop {
-            None => { },
+            None => {}
             Some(n) => {
                 params.push(n.html_escape().to_mut().clone());
                 time_clause = String::from("AND tx.time <= :time_stop");
             }
-        }
+        },
         Some(time_start) => match time_stop {
-            None =>  {
+            None => {
                 params.push(time_start.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time");
-            },
-            Some(time_stop) =>  {
+            }
+            Some(time_stop) => {
                 params.push(time_start.html_escape().to_mut().clone());
                 params.push(time_stop.html_escape().to_mut().clone());
                 time_clause = String::from("AND :time_start <= tx.time AND tx.time <= :time_stop");
             }
-        }
+        },
     }
 
-    let q = format!("
+    let q = format!(
+        "
         SELECT ac.id, ds.amount, ds.amount_exp
         FROM accounts AS ac
         JOIN distributions AS ds ON ds.account_id = ac.id
@@ -66,32 +72,40 @@ pub fn get_account_dist_sum(apikey: &RawStr, account_id: &RawStr, time_start: Op
         WHERE ac.id = :account_isudo d
             AND ac.apikey = :apikey
             {}
-            ", time_clause);
+            ",
+        time_clause
+    );
 
-    let vec: Vec<crate::db::BalanceResult> =
-        conn.prep_exec(q, params )
-            .map(|result| {
-                result.map(|x| x.unwrap()).map(|row| {
-                    let (account_id, amount, amount_exp) = rocket_contrib::databases::mysql::from_row(row);
+    let vec: Vec<crate::db::BalanceResult> = conn
+        .prep_exec(q, params)
+        .map(|result| {
+            result
+                .map(|x| x.unwrap())
+                .map(|row| {
+                    let (account_id, amount, amount_exp) =
+                        rocket_contrib::databases::mysql::from_row(row);
                     crate::db::BalanceResult {
                         account_id,
                         amount,
                         amount_exp,
                     }
-                }).collect()
-            }).unwrap();
-
+                })
+                .collect()
+        })
+        .unwrap();
 
     // We now have zero or more records to sum.
-    let mut sum: DFP = DFP {amount: 0, exp: 0};
+    let mut sum: DFP = DFP { amount: 0, exp: 0 };
     for n in vec {
-        sum = sum.add(&DFP{amount:n.amount, exp:n.amount_exp });
+        sum = sum.add(&DFP {
+            amount: n.amount,
+            exp: n.amount_exp,
+        });
     }
 
     // Now build and return the http response.
     crate::db::ApiResponseOld {
-        json: json!({"sum": sum}),
+        json: json!({ "sum": sum }),
         status: Status::Ok,
     }
-
 }
