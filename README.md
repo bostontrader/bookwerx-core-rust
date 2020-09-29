@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/bostontrader/bookwerx-core-rust/branch/master/graph/badge.svg)](https://codecov.io/gh/bostontrader/bookwerx-core-rust)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](http://opensource.org/licenses/MIT)
 
-The purpose of ***bookwerx-core*** is to provide a RESTful API that supports multi-currency
+The purpose of ***bookwerx-core*** is to provide a primarily RESTful API that supports multi-currency
  bookkeeping, using the double-entry bookkeeping model, slightly adapted to squeeze 
  in multiple currencies.  
  
@@ -23,6 +23,7 @@ such as accounts, currencies, and transactions.
 
 * Perform linting of the bookkeeping objects.
 
+But wait... there's more!  For those who wish to live dangerously bookwerx-core offers an endpoint that will take a string of custom SQL as a query parameter and send back expected results.  But before you panic and start shouting about SQL Injection attacks please take a moment to read the details of this feature.  There are some safety features to reduce the risk and the general framework of providing said safety gives adventure seekers a start in either tightening, loosening, or eliminating the screws as desired.
 
 ## Getting Started
 
@@ -103,20 +104,42 @@ Although **bookwerx-core-rust** is able to drop and rebuild the db from an initi
 
 ## REST vs GraphQL
 
-In this project we have a choice between using a RESTful API and GraphQL.  Although GraphQL is an interesting contender, after the smoke settled, only the RESTful API emerged from thunderdome.
+In this project we have a choice between using a RESTful API or GraphQL.  Although GraphQL is an interesting contender, after the smoke settled, only the RESTful API emerged from thunderdome.
 
 One major problem with RESTful APIs is that there tends to be a proliferation of endpoints and input parameters in order to accommodate real-world usage.  Naming these things and managing them generally is a tedious (but tractable) exercise.  These woes led us to try using GraphQL.  Unfortunately doing so proved to be a disappointment.  
 
 We encountered the following general intractable issues:
 
-* How can we efficiently execute the GraphQL queries?  Doing so requires some connection to the underlying MySQL db.  And doing that requires that we translate GraphQL into MySQL.  This is easier said than done.
+* How can we efficiently execute the GraphQL queries?  Doing so requires some connection to the underlying MySQL db.  And doing that requires that we translate GraphQL queries into MySQL.  This is easier said than done.
 
-* The entire GraphQL ecosystem is generally too complicated for our usage.  A lot of it is very sophisticated and impressive but it's generally tainted by low quality documentation.  Especially the very limited products available for Rust.  Going beyond contrived getting-started examples is too difficult and docs.rs style reference is just not useful.  Consider temptation to dissect a product's parser in order to use it as a red flag.
+* The entire GraphQL ecosystem is generally too complicated for our usage.  A lot of it is very sophisticated and impressive but it's generally tainted by low quality documentation.  Especially the very limited products available for Rust.  Going beyond contrived getting-started examples is too difficult and docs.rs style reference is just not useful.  We consider temptation to dissect a product's parser in order to use it to be a red flag.
 
 We have no wish to bash GraphQL or any of the impressive products that deal with it.  We leave this note here as an archaeological relic so that our progeny and successors can (however unlikely) possibly learn from history and avoid the mistakes of their ancestors.  Perhaps in their time, after their heads have been thawed and their bodies regenerated, they will have access to easier-to-use GraphQL -> SQL tooling.
 
 But until and unless that happens, soldiering on and dealing with the admittedly tedious RESTful managerial issues is tractable and still the easiest path forward for this particular project.
 
+## The /sql endpoint
+
+A few examples to get you started:
+```http request
+http://localhost:3003/sql?query=SELECT accounts.id FROM accounts&apikey=catfood
+http://localhost:3003/sql?query=SELECT accounts.id, currencies.id, currencies.title FROM accounts JOIN currencies ON accounts.currency_id %3d currencies.id&apikey=catfood
+```
+Please notice that we must %encode the equal sign in the query string as %3d.
+
+Because of the woes associated with both ordinary REST and GraphQL we have implemented the /sql endpoint whereby the user can submit a string of SQL and get back expected results.  This feature is not for the faint-of-hearted because it requires knowledge of SQL generally as well as the underlying MySQL schema.  Not to mention the risk of SQL injection attacks.  Nevertheless, there are several safety features in place that can help you control this risk.
+
+First of all, we parse any SQL using [nom-sql](https://github.com/ms705/nom-sql), which is a full-blown SQL parser. An excellent choice for all your SQL parsing needs in general.
+
+Next, we examine the abstract syntax tree (AST) that the parser returns in order to:
+ 
+* Ensure that the query is only a SELECT statement.
+
+* Ensure that all of the fields requested are fully qualified using the table.field syntax and that said tables and fields are present in a white-list.
+
+Finally, the /sql route handler accepts an apikey as a separate parameter and we use that to modify the AST to do our own SQL injection of "WHERE apikey = ? AND (any original where clause)"
+
+The power of this idea comes not from our primitive initial implementation.  Instead, we provide a general framework for parsing, and examining and modifying the resulting AST.  Using this starting point, it would be rather easy to extend.
 
 ## Dates and Times
 

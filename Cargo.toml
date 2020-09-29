@@ -6,16 +6,18 @@ edition = "2018"
 
 [dependencies]
 clap = "2.33.2" # 2020-Aug
-
-mysql = "16.0.2"
+mysql = "=14.2.0"
+mysql17 = {package = "mysql", version = "17.0.0"}
+mysql_common = "=0.12.0"
+nom-sql = { git = "https://github.com/ms705/nom-sql" }
 rand = "0.7.3" # 2020-Aug
-rocket = "0.4.5" # 2020-May
+rocket = "=0.4.5" # 2020-May
 
 # The existing versions of rocket_cors and rocket_contrib have incompatible dependency requirements regarding their mutual dependency 'regex'. I have resolved this by forking rocket_cors and tweaking the regex version.
 #rocket_cors = "0.5.2" # 2020-Mar
 rocket_cors = { git = "https://github.com/bostontrader/rocket_cors", branch = "downgrade-regex" }
 serde = {version = "1.0.112", features = ["derive"]} # 2020-Jun
-serde_json = "1.0.55" # 2020-Jun
+serde_json = "1.0.57" # 2020-Jun
 
 [dev-dependencies]
 assert_cmd = "1.0.1"

@@ -9,7 +9,7 @@ use std::path::Path;
 fn main() {
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.2.0") // VERSION
+        (version: "0.3.0") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg conn: -c --conn +takes_value "Specifies a connection string to connect to the db. Ex: mysql://root:mysecretpassword@127.0.0.1:3306")
@@ -111,7 +111,7 @@ fn main() {
     match file.read_to_string(&mut seed_contents) {
         Ok(_) => {
             // We have successfully read the seed file.  Now connect to the db and reseed.
-            match mysql::Conn::new(&conn_value) {
+            match mysql17::Conn::new(&conn_value) {
                 Ok(mut _conn) => {
                     //println!("Connected to [{}]", conn_string);
                     // Now wipe the db and re-init.

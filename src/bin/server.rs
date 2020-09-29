@@ -9,12 +9,13 @@ use bookwerx_core_rust::routz as Z;
 
 use clap::clap_app;
 use rocket::config::{Config, Environment};
+use std::collections::{HashMap, HashSet};
 use std::env;
 
 fn main() {
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.2.0") // VERSION
+        (version: "0.3.0") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -181,10 +182,25 @@ fn main() {
 
     println!("{:?}", cors);
 
-    // 3.4 Finally, launch it
+    // 3.4 Build the constraints for the /sql endpoint.
+    let mut accounts_fields = HashSet::new();
+    accounts_fields.insert("id");
+    accounts_fields.insert("title");
+
+    let mut currencies_fields = HashSet::new();
+    currencies_fields.insert("id");
+    currencies_fields.insert("symbol");
+    currencies_fields.insert("title");
+
+    let mut constraints = HashMap::new();
+    constraints.insert("accounts", accounts_fields);
+    constraints.insert("currencies", currencies_fields);
+
+    // 3.5 Finally, launch it
     rocket::custom(config)
         .attach(D::MyRocketSQLConn::fairing())
         .attach(cors)
+        .manage(constraints)
         .mount(
             "/",
             routes![
@@ -223,6 +239,7 @@ fn main() {
                 Z::get_linter_accounts::get_linter_accounts,
                 Z::get_linter_categories::get_linter_categories,
                 Z::get_linter_currencies::get_linter_currencies,
+                Z::sql::get_query,
                 Z::transaction::delete_transaction,
                 Z::transaction::get_transaction,
                 Z::transaction::get_transactions,

@@ -1,11 +1,10 @@
 #![feature(decl_macro)]
-//#[macro_use] extern crate rocket;
-//#[macro_use] extern crate rocket_contrib;
 
 pub mod constants;
 pub mod db;
 pub mod dfp;
 pub mod routz;
+pub mod sql;
 
 pub mod routes {
 
@@ -34,7 +33,7 @@ pub mod routes {
             v: Semver {
                 // VERSION
                 major: 0,
-                minor: 2,
+                minor: 3,
                 patch: 0,
             },
         })
