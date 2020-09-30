@@ -15,7 +15,7 @@ use std::env;
 fn main() {
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.3.0") // VERSION
+        (version: "0.4.0") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -185,16 +185,52 @@ fn main() {
     // 3.4 Build the constraints for the /sql endpoint.
     let mut accounts_fields = HashSet::new();
     accounts_fields.insert("id");
+    accounts_fields.insert("apikey");
+    accounts_fields.insert("currency_id");
+    accounts_fields.insert("rarity");
     accounts_fields.insert("title");
+
+    let mut accounts_categories_fields = HashSet::new();
+    accounts_categories_fields.insert("id");
+    accounts_categories_fields.insert("apikey");
+    accounts_categories_fields.insert("account_id");
+    accounts_categories_fields.insert("currency_id");
+
+    let mut categories_fields = HashSet::new();
+    categories_fields.insert("id");
+    categories_fields.insert("apikey");
+    categories_fields.insert("symbol");
+    categories_fields.insert("title");
 
     let mut currencies_fields = HashSet::new();
     currencies_fields.insert("id");
+    currencies_fields.insert("apikey");
+    currencies_fields.insert("rarity");
     currencies_fields.insert("symbol");
     currencies_fields.insert("title");
 
+    let mut distributions_fields = HashSet::new();
+    distributions_fields.insert("id");
+    distributions_fields.insert("account_id");
+    distributions_fields.insert("amount");
+    distributions_fields.insert("amount_exp");
+    distributions_fields.insert("apikey");
+    distributions_fields.insert("transaction_id");
+
+    let mut transactions_fields = HashSet::new();
+    transactions_fields.insert("id");
+    transactions_fields.insert("apikey");
+    transactions_fields.insert("notes");
+    transactions_fields.insert("time");
+
     let mut constraints = HashMap::new();
     constraints.insert("accounts", accounts_fields);
+    constraints.insert("accounts_categories", accounts_categories_fields);
+    constraints.insert("categories", categories_fields);
     constraints.insert("currencies", currencies_fields);
+    constraints.insert("distributions", distributions_fields);
+    constraints.insert("transactions", transactions_fields);
+
 
     // 3.5 Finally, launch it
     rocket::custom(config)

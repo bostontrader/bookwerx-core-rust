@@ -33,7 +33,7 @@ pub mod routes {
             v: Semver {
                 // VERSION
                 major: 0,
-                minor: 3,
+                minor: 4,
                 patch: 0,
             },
         })

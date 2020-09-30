@@ -124,8 +124,11 @@ A few examples to get you started:
 ```http request
 http://localhost:3003/sql?query=SELECT accounts.id FROM accounts&apikey=catfood
 http://localhost:3003/sql?query=SELECT accounts.id, currencies.id, currencies.title FROM accounts JOIN currencies ON accounts.currency_id %3d currencies.id&apikey=catfood
+http://localhost:3003/sql?query=SELECT accounts_categories.account_id FROM accounts_categories JOIN accounts ON accounts.id%3daccounts_categories.account_id JOIN currencies ON currencies.id%3daccounts_categories.account_id WHERE accounts_categories.category_id IN (1155, 1165) AND currencies.symbol%3d%22BTC%22 GROUP BY accounts_categories.account_id HAVING COUNT(DISTINCT accounts_categories.category_id)%3d2&apikey=catfood
 ```
 Please notice that we must %encode the equal sign in the query string as %3d.
+
+Please also be aware that in more complex queries you may have parsing problems related to spaces around parentheses.
 
 Because of the woes associated with both ordinary REST and GraphQL we have implemented the /sql endpoint whereby the user can submit a string of SQL and get back expected results.  This feature is not for the faint-of-hearted because it requires knowledge of SQL generally as well as the underlying MySQL schema.  Not to mention the risk of SQL injection attacks.  Nevertheless, there are several safety features in place that can help you control this risk.
 
