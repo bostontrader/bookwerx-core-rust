@@ -218,6 +218,29 @@ pub struct Semver {
 }
 
 #[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(FromForm)] // PUT /trancats.
+#[derive(Serialize)] // We send these as a json result.
+pub struct Trancat {
+    pub id: u32,
+    pub apikey: String,
+    pub transaction_id: u32,
+    pub category_id: u32,
+}
+
+#[derive(FromForm)] // POST /trancats.
+pub struct TrancatShort {
+    pub apikey: String,
+    pub transaction_id: u32,
+    pub category_id: u32,
+}
+
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
+pub struct Trancat2 {
+    pub category_symbol: String,
+}
+
+#[derive(Clone, Deserialize)] // A test parses a response into this struct.
 #[derive(FromForm)] // PUT /transactions.
 #[derive(Serialize)] // We send these as a json result.
 pub struct Transaction {
@@ -354,6 +377,15 @@ pub enum GetDistributionResponse {
 pub enum GetDistributionJoinedResponse {
     // One(Distribution),
     Many(Vec<DistributionJoined>),
+    Error(String),
+}
+
+#[derive(Deserialize)] // A test parses a response into this struct.
+#[derive(Serialize)] // We send these as a json result.
+#[serde(untagged)]
+pub enum GetTrancatResponse {
+    One(Trancat),
+    Many(Vec<Trancat>),
     Error(String),
 }
 

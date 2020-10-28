@@ -13,6 +13,7 @@ pub fn deletor(
     categories: &Vec<D::Category>,
     currencies: &Vec<D::Currency>,
     distributions: &Vec<D::Distribution>,
+    trancats: &Vec<D::Trancat>,
     transactions: &Vec<D::Transaction>,
 ) {
     // 1. First try to delete things that cannot be deleted because of referential integrity constraints.  Watch and laugh as these efforts fail with status 200 and ApiError.
@@ -95,7 +96,20 @@ pub fn deletor(
         }
     }
 
-    // 2.2 DELETE all transactions.
+    // 2.2 DELETE all trancats.
+    for trancat in trancats {
+        response = client
+            .delete(format!("/trancat/{}/?apikey={}", trancat.id, apikey))
+            .header(ContentType::Form)
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+            D::APIResponse::Info(_) => assert!(true),
+            _ => assert!(false),
+        }
+    }
+
+    // 2.3 DELETE all transactions.
     for transaction in transactions {
         response = client
             .delete(format!(
@@ -111,7 +125,7 @@ pub fn deletor(
         }
     }
 
-    // 2.3 DELETE all acctcats.
+    // 2.4 DELETE all acctcats.
     for acctcat in acctcats {
         response = client
             .delete(format!("/acctcat/{}/?apikey={}", acctcat.id, apikey))
@@ -124,20 +138,22 @@ pub fn deletor(
         }
     }
 
-    // 2.4 DELETE all accounts.
+    // 2.5 DELETE all accounts.
     for account in accounts {
         response = client
             .delete(format!("/account/{}/?apikey={}", account.id, apikey))
             .header(ContentType::Form)
             .dispatch();
         assert_eq!(response.status(), Status::Ok);
+        //let s1 = response.body_string().unwrap();
+        //println!("{}", s1);
         match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
             D::APIResponse::Info(_) => assert!(true),
             _ => assert!(false),
         }
     }
 
-    // 2.5 DELETE all currencies.
+    // 2.6 DELETE all currencies.
     for currency in currencies {
         response = client
             .delete(format!("/currency/{}/?apikey={}", currency.id, apikey))
@@ -150,7 +166,7 @@ pub fn deletor(
         }
     }
 
-    // 2.6 DELETE all categories.
+    // 2.7 DELETE all categories.
     for category in categories {
         response = client
             .delete(format!("/category/{}/?apikey={}", category.id, apikey))
@@ -218,7 +234,20 @@ pub fn deletor(
         _ => assert!(false),
     }
 
-    // 3.6 GET /transactions.
+    // 3.6 GET /trancats.
+    response = client
+        .get(format!(
+            "/trancats/for_category?apikey={}&category_id={}",
+            &apikey,
+            (categories.get(0).unwrap()).id
+        ))
+        .dispatch();
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::GetTrancatResponse::Many(v) => assert_eq!(v.len(), 0),
+        _ => assert!(false),
+    }
+
+    // 3.7 GET /transactions.
     response = client
         .get(format!("/transactions?apikey={}", &apikey))
         .dispatch();

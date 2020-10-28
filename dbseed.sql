@@ -83,3 +83,18 @@ CREATE TABLE accounts_categories (
   FOREIGN KEY (category_id, apikey) REFERENCES categories (id, apikey)
 
 );
+
+CREATE TABLE transactions_categories (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  apikey VARCHAR(45) NOT NULL,
+  transaction_id INT UNSIGNED NOT NULL,
+  category_id INT UNSIGNED NOT NULL,
+
+  PRIMARY KEY (id, apikey),
+  UNIQUE KEY (transaction_id, category_id),
+
+  FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
+  FOREIGN KEY (transaction_id, apikey) REFERENCES transactions (id, apikey),
+  FOREIGN KEY (category_id, apikey) REFERENCES categories (id, apikey)
+
+);

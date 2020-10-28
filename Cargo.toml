@@ -1,16 +1,16 @@
 [package]
 name = "bookwerx-core-rust"
-version = "0.4.0" #  VERSION
+version = "0.4.1" #  VERSION
 authors = ["Thomas Radloff <bostontrader@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.33.2" # 2020-Aug
+clap = "=2.33.3" # 2020-Oct
 mysql = "=14.2.0"
 mysql17 = {package = "mysql", version = "17.0.0"}
 mysql_common = "=0.12.0"
 nom-sql = { git = "https://github.com/ms705/nom-sql" }
-rand = "0.7.3" # 2020-Aug
+rand = "=0.7.3" # 2020-Oct
 rocket = "=0.4.5" # 2020-May
 
 # The existing versions of rocket_cors and rocket_contrib have incompatible dependency requirements regarding their mutual dependency 'regex'. I have resolved this by forking rocket_cors and tweaking the regex version.

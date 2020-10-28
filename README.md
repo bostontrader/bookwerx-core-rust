@@ -124,7 +124,7 @@ A few examples to get you started:
 ```http request
 http://localhost:3003/sql?query=SELECT accounts.id FROM accounts&apikey=catfood
 http://localhost:3003/sql?query=SELECT accounts.id, currencies.id, currencies.title FROM accounts JOIN currencies ON accounts.currency_id %3d currencies.id&apikey=catfood
-http://localhost:3003/sql?query=SELECT accounts_categories.account_id FROM accounts_categories JOIN accounts ON accounts.id%3daccounts_categories.account_id JOIN currencies ON currencies.id%3daccounts_categories.account_id WHERE accounts_categories.category_id IN (1155, 1165) AND currencies.symbol%3d%22BTC%22 GROUP BY accounts_categories.account_id HAVING COUNT(DISTINCT accounts_categories.category_id)%3d2&apikey=catfood
+http://localhost:3003/sql?query=SELECT accounts_categories.account_id FROM accounts_categories JOIN accounts ON accounts.id%3daccounts_categories.account_id JOIN currencies ON currencies.id%3daccounts_categories.currency_id WHERE accounts_categories.category_id IN (1155, 1165) AND currencies.symbol%3d%22BTC%22 GROUP BY accounts_categories.account_id HAVING COUNT(DISTINCT accounts_categories.category_id)%3d2&apikey=catfood
 ```
 Please notice that we must %encode the equal sign in the query string as %3d.
 
@@ -155,3 +155,9 @@ One practical example would be an ISO-8601 string.  Said strings can have the qu
 ## Numbers
 
 Generally, the API sends and receives financial numeric amounts using a decimal floating point system.  Each number is represented as an integer significand and an integer exponent.  In this way we can _exactly_ store and transmit the numbers without being bothered with round-off errors.  It's the job of a UI to perform non-destructive rounding when necessary.
+
+## Categories
+
+**bookwerx-core-rust** provides a system of categories so that you may define any number of categories and then tag accounts and transactions with any number of these categories.  It's easy to imagine that we might want to categorize accounts as "assets", "liabilities", etc., and perhaps categorize transactions as "deposits", "transfers", or "withdrawals".  Once you get the hang of this the ideas will flow freely.
+
+This feature is implemented using one table that contains all the defined categories, a join table that relates categories to accounts in a many-to-many relationship, as well as another join table to do the same between categories and transactions.  This is a very general purpose tool.  It would be easy for the user to create a blizzard of categories, lose track of their purposes, apply said categories haphazardly, and to generally get confused.  Managing this complexity is the job for another tool.

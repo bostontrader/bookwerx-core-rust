@@ -15,7 +15,7 @@ use std::env;
 fn main() {
     // 1. Configure the CLI
     let cli_matcher = clap_app!(bookwerx_core_rust =>
-        (version: "0.4.0") // VERSION
+        (version: "0.4.1") // VERSION
         (author: "Thomas Radloff. <bostontrader@gmail.com>")
         (about: "A blind man in a dark room looking for a black cat that's not there.")
         (@arg bind_ip: -b --bind_ip +takes_value "Specifies an IP address for the http server to bind to. Ex: 0.0.0.0")
@@ -194,7 +194,7 @@ fn main() {
     accounts_categories_fields.insert("id");
     accounts_categories_fields.insert("apikey");
     accounts_categories_fields.insert("account_id");
-    accounts_categories_fields.insert("currency_id");
+    accounts_categories_fields.insert("category_id");
 
     let mut categories_fields = HashSet::new();
     categories_fields.insert("id");
@@ -216,6 +216,12 @@ fn main() {
     distributions_fields.insert("amount_exp");
     distributions_fields.insert("apikey");
     distributions_fields.insert("transaction_id");
+
+    let mut transactions_categories_fields = HashSet::new();
+    transactions_categories_fields.insert("id");
+    transactions_categories_fields.insert("apikey");
+    transactions_categories_fields.insert("transaction_id");
+    transactions_categories_fields.insert("category_id");
 
     let mut transactions_fields = HashSet::new();
     transactions_fields.insert("id");
@@ -276,6 +282,10 @@ fn main() {
                 Z::get_linter_categories::get_linter_categories,
                 Z::get_linter_currencies::get_linter_currencies,
                 Z::sql::get_query,
+                Z::trancat::get_trancat,
+                Z::trancat::get_trancats_for_category,
+                Z::trancat::post_trancat,
+                Z::trancat::put_trancat,
                 Z::transaction::delete_transaction,
                 Z::transaction::get_transaction,
                 Z::transaction::get_transactions,

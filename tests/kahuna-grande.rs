@@ -14,6 +14,7 @@ mod currencies;
 mod deletor;
 mod distributions;
 mod linter;
+mod trancats;
 mod transactions;
 
 use bookwerx_core_rust::constants as C;
@@ -67,7 +68,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let categories = categories::categories(&client, &apikey);
 
     // One account (cash in mattress) is tagged with two categories (assets, specific customer).
-    // One category (assets) tagges two accounts (cash in mattress | cookie jar)
+    // One category (assets) tags two accounts (cash in mattress | cookie jar)
     // Cash in mattress   | Assets
     // Cash in mattress   | Specific customer
     // Cash in cookie jar | Assets
@@ -103,6 +104,10 @@ fn kahuna_grande(client: &Client, apikey: &String) {
     let transactions = transactions::transactions(&client, &apikey);
     let distributions = distributions::distributions(&client, &apikey, &accounts, &transactions);
 
+    // Now test transactions_categories.  In this test we connect various categories to transactions.  Don't worry about any other apparent meaning.
+    let trancats = trancats::trancats(&client, &apikey, &transactions, &categories);
+
+    // Do some linting
     linter::linter(&client, &apikey);
     let _ = account_dist_sum::account_dist_sum(&client, &apikey, &accounts);
     let _ = category_dist_sums::category_dist_sums(&client, &apikey, &categories);
@@ -116,6 +121,7 @@ fn kahuna_grande(client: &Client, apikey: &String) {
         &categories,
         &currencies,
         &distributions,
+        &trancats,
         &transactions,
     );
 }
@@ -182,6 +188,11 @@ fn startup() -> Client {
                 Z::get_linter_accounts::get_linter_accounts,
                 Z::get_linter_categories::get_linter_categories,
                 Z::get_linter_currencies::get_linter_currencies,
+                Z::trancat::delete_trancat,
+                Z::trancat::get_trancat,
+                Z::trancat::get_trancats_for_category,
+                Z::trancat::post_trancat,
+                Z::trancat::put_trancat,
                 Z::transaction::delete_transaction,
                 Z::transaction::get_transaction,
                 Z::transaction::get_transactions,
