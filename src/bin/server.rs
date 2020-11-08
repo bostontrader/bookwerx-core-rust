@@ -236,6 +236,7 @@ fn main() {
     constraints.insert("currencies", currencies_fields);
     constraints.insert("distributions", distributions_fields);
     constraints.insert("transactions", transactions_fields);
+    constraints.insert("transactions_categories", transactions_categories_fields);
 
 
     // 3.5 Finally, launch it
