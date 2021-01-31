@@ -19,7 +19,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     // 2.1. But first post using a non-existent apikey. 200 and db error.
     response = client
         .post("/currencies")
-        .body("apikey=notarealkey&rarity=0&symbol=QTL&title=Quatloo")
+        .body("apikey=notarealkey&symbol=QTL&title=Quatloo")
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -32,7 +32,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     response = client
         .post("/currencies")
         .body(format!(
-            "apikey={}&rarity=0&symbol=QTL&title=Quatloo",
+            "apikey={}&symbol=QTL&title=Quatloo",
             apikey
         ))
         .header(ContentType::Form)
@@ -51,7 +51,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     response = client
         .put("/currencies")
         .body(format!(
-            "apikey={}&id={}&rarity=0&symbol=QTL&title=Quatloo",
+            "apikey={}&id={}&symbol=QTL&title=Quatloo",
             apikey, lid
         ))
         .header(ContentType::Form)
@@ -76,7 +76,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     response = client
         .post("/currencies")
         .body(format!(
-            "apikey={}&rarity=0&symbol=QTL&title=Quatloo",
+            "apikey={}&symbol=QTL&title=Quatloo",
             apikey
         ))
         .header(ContentType::Form)
@@ -100,7 +100,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     // 6. Make a 2nd Successful post. 200.
     response = client
         .post("/currencies")
-        .body(format!("apikey={}&rarity=0&symbol=XAU&title=Gold", apikey))
+        .body(format!("apikey={}&symbol=XAU&title=Gold", apikey))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
@@ -113,7 +113,7 @@ pub fn currencies(client: &Client, apikey: &String) -> Vec<D::Currency> {
     response = client
         .post("/currencies")
         .body(format!(
-            "apikey={}&rarity=0&symbol=GAS&title=General Atomic Shekel",
+            "apikey={}&symbol=GAS&title=General Atomic Shekel",
             apikey
         ))
         .header(ContentType::Form)

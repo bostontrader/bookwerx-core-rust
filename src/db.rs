@@ -30,7 +30,6 @@ pub struct Account {
     pub id: u32,
     pub apikey: String,
     pub currency_id: u32,
-    pub rarity: u8,
     pub title: String,
 }
 
@@ -38,7 +37,6 @@ pub struct Account {
 pub struct AccountDenormalized {
     pub id: u32,
     pub apikey: String,
-    pub rarity: u8,
     pub title: String,
     pub cur_symbol: String,
     pub cur_title: String,
@@ -54,7 +52,6 @@ pub struct AccountJoined {
     pub id: u32,
     pub apikey: String,
     pub currency: CurrencyShort1,
-    pub rarity: u8,
     pub title: String,
     pub categories: Vec<Acctcat2>,
 }
@@ -63,7 +60,6 @@ pub struct AccountJoined {
 pub struct AccountShort {
     pub apikey: String,
     pub currency_id: u32,
-    pub rarity: u8,
     pub title: String,
 }
 
@@ -122,7 +118,6 @@ pub struct CategoryShort {
 pub struct Currency {
     pub id: u32,
     pub apikey: String,
-    pub rarity: u8,
     pub symbol: String,
     pub title: String,
 }
@@ -130,7 +125,6 @@ pub struct Currency {
 #[derive(FromForm)] // POST /currencies.
 pub struct CurrencyShort {
     pub apikey: String,
-    pub rarity: u8,
     pub symbol: String,
     pub title: String,
 }

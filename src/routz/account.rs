@@ -41,11 +41,11 @@ pub fn get_account(
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<Account> =
-        conn.prep_exec("SELECT id, apikey, currency_id, rarity, title from accounts where id = :id and apikey = :apikey", params)
+        conn.prep_exec("SELECT id, apikey, currency_id, title from accounts where id = :id and apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, apikey, currency_id, rarity, title) = rocket_contrib::databases::mysql::from_row(row);
-                    Account {id,apikey,currency_id,rarity,title}
+                    let (id, apikey, currency_id, title) = rocket_contrib::databases::mysql::from_row(row);
+                    Account {id,apikey,currency_id,title}
                 }).collect()
             }).unwrap();
 
@@ -67,7 +67,7 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
     let vec: Vec<AccountDenormalized> =
         conn.prep_exec(r#"
                 SELECT
-                    accounts.id as id, accounts.apikey as apikey, accounts.rarity, accounts.title as title,
+                    accounts.id as id, accounts.apikey as apikey, accounts.title as title,
                     cur.symbol as cur_symbol, cur.title as cur_title,
                     ifnull(ac.category_id, 0) as ac_category_id,
                     ifnull(cat.symbol, '') as cat_symbol,
@@ -81,8 +81,8 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
 
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, apikey, rarity, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title) = rocket_contrib::databases::mysql::from_row(row);
-                    AccountDenormalized { id, apikey, rarity, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title}
+                    let (id, apikey, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title) = rocket_contrib::databases::mysql::from_row(row);
+                    AccountDenormalized { id, apikey, title, cur_symbol, cur_title, ac_category_id, cat_symbol, cat_title}
                 }).collect()
             }).unwrap();
 
@@ -93,7 +93,6 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
     let mut act_struct = AccountJoined {
         id: 0,
         apikey: String::from(""),
-        rarity: 0,
         currency: crate::db::CurrencyShort1 {
             symbol: String::from(""),
             title: String::from(""),
@@ -125,7 +124,6 @@ pub fn get_accounts(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetAccou
                 id: val.id,
                 apikey: String::from(&val.apikey),
                 currency: cur,
-                rarity: val.rarity,
                 title: String::from(&val.title),
                 categories: Vec::new(),
             };
@@ -151,8 +149,8 @@ pub fn post_account(
     account: rocket::request::Form<AccountShort>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("INSERT INTO accounts (apikey, currency_id, rarity, title) VALUES (:apikey, :currency_id, :rarity, :title)",(
-        &account.apikey, &account.currency_id, &account.rarity, &account.title)) {
+    match conn.prep_exec("INSERT INTO accounts (apikey, currency_id, title) VALUES (:apikey, :currency_id, :title)",(
+        &account.apikey, &account.currency_id, &account.title)) {
         Ok(result) => Json(APIResponse::LastInsertId(result.last_insert_id())),
         Err(err) => Json(APIResponse::Error(String::from(err.to_string())))
     }
@@ -163,8 +161,8 @@ pub fn put_account(
     account: rocket::request::Form<Account>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("UPDATE accounts SET currency_id = :currency_id, rarity = :rarity, title = :title where id = :id and apikey = :apikey",(
-        &account.currency_id, &account.rarity, &account.title, &account.id, &account.apikey)) {
+    match conn.prep_exec("UPDATE accounts SET currency_id = :currency_id, title = :title where id = :id and apikey = :apikey",(
+        &account.currency_id, &account.title, &account.id, &account.apikey)) {
         Ok(result) => Json(APIResponse::Info(String::from_utf8_lossy(&result.info()).to_string())),
         Err(err) => Json(APIResponse::Error(String::from(err.to_string()))),
     }

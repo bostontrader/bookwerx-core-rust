@@ -9,13 +9,11 @@ CREATE TABLE apikeys (
 CREATE TABLE currencies (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   apikey VARCHAR(45) NOT NULL,
-  rarity INT(1) NOT NULL DEFAULT 0,
   symbol VARCHAR(45) NOT NULL,
   title VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id, apikey),
   UNIQUE KEY (symbol, apikey),
-  INDEX (rarity ASC),
 
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
 );
@@ -24,11 +22,9 @@ CREATE TABLE accounts (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   apikey VARCHAR(45) NOT NULL,
   currency_id INT UNSIGNED NOT NULL,
-  rarity INT(1) NOT NULL DEFAULT 0,
   title VARCHAR(45) NOT NULL,
 
   PRIMARY KEY (id, apikey),
-  INDEX (rarity ASC),
   FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
   FOREIGN KEY (currency_id, apikey) REFERENCES currencies (id, apikey)
 );

@@ -38,11 +38,11 @@ pub fn get_currency(
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<Currency> =
-        conn.prep_exec("SELECT id, apikey, rarity, symbol, title from currencies where id = :id and apikey = :apikey", params)
+        conn.prep_exec("SELECT id, apikey, symbol, title from currencies where id = :id and apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, apikey, rarity, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
-                    Currency {id,apikey,rarity,symbol,title}
+                    let (id, apikey, symbol, title) = rocket_contrib::databases::mysql::from_row(row);
+                    Currency {id,apikey,symbol,title}
                 }).collect()
             }).unwrap();
 
@@ -63,19 +63,18 @@ pub fn get_currencies(apikey: &RawStr, mut conn: MyRocketSQLConn) -> Json<GetCur
 
     let vec: Vec<Currency> = conn
         .prep_exec(
-            "SELECT id, apikey, rarity, symbol, title from currencies where apikey = :apikey",
+            "SELECT id, apikey, symbol, title from currencies where apikey = :apikey",
             params,
         )
         .map(|result| {
             result
                 .map(|x| x.unwrap())
                 .map(|row| {
-                    let (id, apikey, rarity, symbol, title) =
+                    let (id, apikey, symbol, title) =
                         rocket_contrib::databases::mysql::from_row(row);
                     Currency {
                         id,
                         apikey,
-                        rarity,
                         symbol,
                         title,
                     }
@@ -92,7 +91,7 @@ pub fn post_currency(
     currency: rocket::request::Form<CurrencyShort>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("INSERT INTO currencies (apikey, rarity, symbol, title) VALUES (:apikey, :rarity, :symbol, :title)",(&currency.apikey, &currency.rarity, &currency.symbol, &currency.title)) {
+    match conn.prep_exec("INSERT INTO currencies (apikey, symbol, title) VALUES (:apikey, :symbol, :title)",(&currency.apikey, &currency.symbol, &currency.title)) {
         Ok(result) => Json(APIResponse::LastInsertId(result.last_insert_id())),
         Err(err) => Json(APIResponse::Error(String::from(err.to_string())))
     }
@@ -103,7 +102,7 @@ pub fn put_currency(
     currency: rocket::request::Form<Currency>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("UPDATE currencies SET rarity = :rarity, symbol = :symbol, title = :title where id = :id and apikey = :apikey",(&currency.rarity, &currency.symbol, &currency.title, &currency.id, &currency.apikey)) {
+    match conn.prep_exec("UPDATE currencies SET symbol = :symbol, title = :title where id = :id and apikey = :apikey",(&currency.symbol, &currency.title, &currency.id, &currency.apikey)) {
         Ok(result) => Json(APIResponse::Info(String::from_utf8_lossy(&result.info()).to_string())),
         Err(err) => Json(APIResponse::Error(String::from(err.to_string()))),
     }

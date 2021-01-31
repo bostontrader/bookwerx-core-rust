@@ -187,7 +187,6 @@ fn main() {
     accounts_fields.insert("id");
     accounts_fields.insert("apikey");
     accounts_fields.insert("currency_id");
-    accounts_fields.insert("rarity");
     accounts_fields.insert("title");
 
     let mut accounts_categories_fields = HashSet::new();
@@ -205,7 +204,6 @@ fn main() {
     let mut currencies_fields = HashSet::new();
     currencies_fields.insert("id");
     currencies_fields.insert("apikey");
-    currencies_fields.insert("rarity");
     currencies_fields.insert("symbol");
     currencies_fields.insert("title");
 

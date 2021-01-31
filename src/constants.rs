@@ -19,5 +19,5 @@ pub const SEED_KEY_CLI: &str = "seed";
 // We also have some constants solely for testing.
 pub const TEST_BIND_IP: &str = "0.0.0.0";
 pub const TEST_BIND_PORT: u16 = 8000;
-pub const TEST_CONN: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
+pub const TEST_CONN: &str = "mysql://root:supersecretpassword@localhost:3306";
 pub const TEST_DBNAME: &str = "bookwerx-core-rust-test";

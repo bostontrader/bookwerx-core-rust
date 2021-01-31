@@ -25,7 +25,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey=notarealkey&currency_id={}&rarity=0&title=Cash in mattress",
+            "apikey=notarealkey&currency_id={}&title=Cash in mattress",
             (currencies.get(0).unwrap()).id
         ))
         .header(ContentType::Form)
@@ -40,7 +40,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey={}&currency_id={}&rarity=0&title=Cash in mattress",
+            "apikey={}&currency_id={}&title=Cash in mattress",
             apikey,
             (currencies.get(0).unwrap()).id
         ))
@@ -60,7 +60,7 @@ pub fn accounts(
     response = client
         .put("/accounts")
         .body(format!(
-            "apikey={}&id={}&currency_id={}&rarity=0&title=Cash in mattress",
+            "apikey={}&id={}&currency_id={}&title=Cash in mattress",
             apikey,
             lid,
             (currencies.get(0).unwrap()).id
@@ -87,7 +87,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey={}&currency_id=666&rarity=0&title=Cash in mattress",
+            "apikey={}&currency_id=666&title=Cash in mattress",
             apikey
         ))
         .header(ContentType::Form)
@@ -111,7 +111,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey={}&currency_id={}&rarity=0&title=Cash in cookie jar",
+            "apikey={}&currency_id={}&title=Cash in cookie jar",
             apikey,
             (currencies.get(1).unwrap()).id
         ))
@@ -127,7 +127,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey={}&currency_id={}&rarity=0&title=Bank of Mises",
+            "apikey={}&currency_id={}&title=Bank of Mises",
             apikey,
             (currencies.get(1).unwrap()).id
         ))
@@ -143,7 +143,7 @@ pub fn accounts(
     response = client
         .post("/accounts")
         .body(format!(
-            "apikey={}&currency_id={}&rarity=0&title=Boats n hos",
+            "apikey={}&currency_id={}&title=Boats n hos",
             apikey,
             (currencies.get(1).unwrap()).id
         ))

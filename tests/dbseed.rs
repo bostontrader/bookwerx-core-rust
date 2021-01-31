@@ -44,7 +44,7 @@ Finally, a few random edge cases to smoke out some obscure error messages.
 */
 
 const CARGO_BIN: &str = "dbseed";
-const TEST_CONN_STR: &str = "mysql://root:supersecretpassword@172.17.0.2:3306";
+const TEST_CONN_STR: &str = "mysql://root:supersecretpassword@localhost:3306";
 const TEST_DBNAME: &str = "bookwerx-core-rust-test";
 const VALID_SEED_FILE: &str = "dbseed.sql";
 const INVALID_SEED_FILE: &str = "tests/invalid-seed.sql";
@@ -286,7 +286,7 @@ fn invalid_conn() -> Result<(), Box<dyn std::error::Error>> {
     // This is necessary to make the test proceed far enough to test what we want.
     cmd.env(
         C::CONN_KEY_ENV,
-        "mysql://root:wrongpassword@172.17.0.2:3306",
+        "mysql://root:wrongpassword@localhost:3306",
     )
     .env(C::DBNAME_KEY_ENV, TEST_DBNAME)
     .env(C::SEED_KEY_ENV, VALID_SEED_FILE);
