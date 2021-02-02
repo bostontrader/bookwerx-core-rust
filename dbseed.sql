@@ -55,6 +55,7 @@ CREATE TABLE distributions (
 
 CREATE TABLE categories (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  parent_id INT UNSIGNED,
   apikey VARCHAR(45) NOT NULL,
   symbol VARCHAR(45) NOT NULL,
   title VARCHAR(45) NOT NULL,
@@ -62,7 +63,8 @@ CREATE TABLE categories (
   PRIMARY KEY (id, apikey),
   UNIQUE KEY (symbol, apikey),
 
-  FOREIGN KEY (apikey) REFERENCES apikeys (apikey)
+  FOREIGN KEY (apikey) REFERENCES apikeys (apikey),
+  FOREIGN KEY (parent_id) REFERENCES categories (id)
 );
 
 CREATE TABLE accounts_categories (
