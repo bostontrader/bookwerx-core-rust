@@ -57,6 +57,7 @@ pub struct AccountJoined {
 }
 
 #[derive(FromForm)] // POST /accounts.
+#[derive(Debug)]
 pub struct AccountShort {
     pub apikey: String,
     pub currency_id: u32,
@@ -150,6 +151,7 @@ pub struct Distribution {
     pub account_id: u32,
     pub amount: i64,
     pub amount_exp: i8,
+    pub amountbt: String,
     pub apikey: String,
     pub transaction_id: u32,
 }
@@ -170,10 +172,12 @@ pub struct DistributionJoined {
 }
 
 #[derive(FromForm)] // POST /distributions.
+#[derive(Debug)]
 pub struct DistributionShort {
     pub account_id: u32,
     pub amount: i64,
     pub amount_exp: i8,
+    pub amountbt: String,
     pub apikey: String,
     pub transaction_id: u32,
 }

@@ -4,6 +4,7 @@ use rocket::http::Status;
 use rocket::local::Client;
 
 /* Please see the comments for transactions for a discussion of constraints in this test.
+Specifically don't change the amounts.
 
   These tests include testing the correct number of distributions for_account and for_tx
 */
@@ -19,7 +20,7 @@ pub fn distributions(
     let transaction_id1: u32 = (*transactions.get(1).unwrap()).id;
     let transaction_id2: u32 = (*transactions.get(2).unwrap()).id;
 
-    // 1. GET /distributions/for_tx.
+    // 1. GET /distributions/for_tx, sb zero.
     let mut response = client
         .get(format!(
             "/distributions/for_tx?apikey={}&transaction_id={}",
@@ -34,7 +35,7 @@ pub fn distributions(
         _ => assert!(false),
     }
 
-    // 1.1 GET /distributions/for_account.
+    // 1.1 GET /distributions/for_account, sb zero.
     let mut response = client
         .get(format!(
             "/distributions/for_account?apikey={}&account_id={}",
@@ -53,22 +54,39 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "apikey=notarealkey&transaction_id={}&account_id={}&amount=3&amount_exp=0",
+            "apikey=notarealkey&transaction_id={}&account_id={}&amount=3&amount_exp=0&amountbt=3",
             transaction_id1, account_id1
         ))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Error(_) => assert!(true),
+        D::APIResponse::Error(_) => assert!(true), // WARNING: Are we seeing the right error? Big long tedious referential integrity error.
         _ => assert!(false),
     }
 
-    // 2.2 Successful post.
+    // 2.2. amountbt with non-numeric should fail.
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=3&amount_exp=0",
+            "apikey={}&transaction_id={}&account_id={}&amount=3&amount_exp=0&amountbt=non-numeric",
+            apikey, transaction_id1, account_id1
+        ))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(err) => assert_eq!(err, "amountbt contains one or more non-numeric characters."),
+        _ => assert!(false),
+    }
+
+    // We will have opportunity to POST using a minus sign later, don't test that here.
+
+    // 2.3 Successful post.  The amount is wrong, but we will fix it in a subsequent put.
+    response = client
+        .post("/distributions")
+        .body(format!(
+            "&apikey={}&transaction_id={}&account_id={}&amount=33&amount_exp=0&amountbt=33",
             apikey, transaction_id0, account_id0
         ))
         .header(ContentType::Form)
@@ -82,22 +100,55 @@ pub fn distributions(
         _ => assert!(false),
     }
 
-    // 2.3 Successful put.
+    // 3. Try A PUT
+
+    // 3.1 amountbt with non-numeric should fail.
     response = client
         .put("/distributions")
         .body(format!(
-            "&apikey={}&id={}&account_id={}&transaction_id={}&amount=3&amount_exp=0",
+            "&apikey={}&id={}&account_id={}&transaction_id={}&amount=3&amount_exp=0&amountbt=non-numeric",
+            apikey, lid, account_id0, transaction_id0
+        ))
+        .header(ContentType::Form)
+        .dispatch();
+
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Error(err) => assert_eq!(err, "amountbt contains one or more non-numeric characters."),
+        _ => assert!(false),
+    }
+
+    // 3.2 Successful put, wrong and negative amount.  Test that we can use a - sign.
+    response = client
+        .put("/distributions")
+        .body(format!(
+            "&apikey={}&id={}&account_id={}&transaction_id={}&amount=-3&amount_exp=0&amountbt=-3",
             apikey, lid, account_id0, transaction_id0
         ))
         .header(ContentType::Form)
         .dispatch();
     assert_eq!(response.status(), Status::Ok);
     match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
-        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 0  Warnings: 0"),
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 1  Warnings: 0"),
         _ => assert!(false),
     }
 
-    // 3. Now verify that there's a single distribution for_tx
+    // 3.3 Successful put, correct positive amount.
+    response = client
+        .put("/distributions")
+        .body(format!(
+            "&apikey={}&id={}&account_id={}&transaction_id={}&amount=3&amount_exp=0&amountbt=3",
+            apikey, lid, account_id0, transaction_id0
+        ))
+        .header(ContentType::Form)
+        .dispatch();
+    assert_eq!(response.status(), Status::Ok);
+    match serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap() {
+        D::APIResponse::Info(info) => assert_eq!(info, "(Rows matched: 1  Changed: 1  Warnings: 0"),
+        _ => assert!(false),
+    }
+
+    // 4. Now verify that there's a single distribution for_tx
     response = client
         .get(format!(
             "/distributions/for_tx?apikey={}&transaction_id={}",
@@ -110,7 +161,7 @@ pub fn distributions(
         _ => assert!(false),
     }
 
-    // 3.1 Now verify that there's a single distribution for_account
+    // 4.1 Now verify that there's a single distribution for_account
     response = client
         .get(format!(
             "/distributions/for_account?apikey={}&account_id={}",
@@ -123,8 +174,6 @@ pub fn distributions(
         _ => assert!(false),
     }
 
-    // 4. Post bad record...
-
     // 5. Now submit a single GET of the prior POST.
     // Don't do this.  Nobody cares.
 
@@ -132,7 +181,7 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=-3&amount_exp=0",
+            "&apikey={}&transaction_id={}&account_id={}&amount=-3&amount_exp=0&amountbt=-3",
             apikey, transaction_id0, account_id1
         ))
         .header(ContentType::Form)
@@ -143,7 +192,7 @@ pub fn distributions(
         _ => assert!(false),
     }
 
-    // 6.1 Now verify the correct count of transactions for_tx and for_account
+    // 6.1 Now verify the correct count of transactions for_tx and for_account. sb 2 and 1.
     response = client
         .get(format!(
             "/distributions/for_tx?apikey={}&transaction_id={}",
@@ -176,7 +225,7 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=4&amount_exp=0",
+            "&apikey={}&transaction_id={}&account_id={}&amount=4&amount_exp=0&amountbt=4",
             apikey, transaction_id1, account_id0
         ))
         .header(ContentType::Form)
@@ -191,7 +240,7 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=-4&amount_exp=0",
+            "&apikey={}&transaction_id={}&account_id={}&amount=-4&amount_exp=0&amountbt=-4",
             apikey, transaction_id1, account_id1
         ))
         .header(ContentType::Form)
@@ -208,7 +257,7 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=5&amount_exp=0",
+            "&apikey={}&transaction_id={}&account_id={}&amount=5&amount_exp=0&amountbt=5",
             apikey, transaction_id2, account_id0
         ))
         .header(ContentType::Form)
@@ -223,7 +272,7 @@ pub fn distributions(
     response = client
         .post("/distributions")
         .body(format!(
-            "&apikey={}&transaction_id={}&account_id={}&amount=-5&amount_exp=0",
+            "&apikey={}&transaction_id={}&account_id={}&amount=-5&amount_exp=0&amountbt=-5",
             apikey, transaction_id2, account_id1
         ))
         .header(ContentType::Form)

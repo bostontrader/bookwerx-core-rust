@@ -2,6 +2,7 @@ use crate::db::{
     APIResponse, Distribution, DistributionJoined, DistributionShort,
     GetDistributionJoinedResponse, GetDistributionResponse, MyRocketSQLConn,
 };
+use regex::Regex;
 use rocket::http::RawStr;
 use rocket_contrib::json::Json;
 
@@ -44,8 +45,8 @@ pub fn get_distribution(
         conn.prep_exec("SELECT id, apikey, account_id, amount, amount_exp, transaction_id from distributions where id = :id and apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, apikey, account_id, amount, amount_exp, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                    Distribution {id, apikey, account_id, amount, amount_exp, transaction_id}
+                    let (id, apikey, account_id, amount, amount_exp, amountbt, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
+                    Distribution {id, apikey, account_id, amount, amount_exp, amountbt, transaction_id}
                 }).collect()
             }).unwrap();
 
@@ -70,11 +71,11 @@ pub fn get_distributions(
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<Distribution> =
-        conn.prep_exec("SELECT id, account_id, amount, amount_exp, apikey, transaction_id from distributions where apikey = :apikey", params)
+        conn.prep_exec("SELECT id, account_id, amount, amount_exp, amountbt, apikey, transaction_id from distributions where apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, account_id, amount, amount_exp, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                    Distribution {id, account_id, amount, amount_exp, apikey, transaction_id}
+                    let (id, account_id, amount, amount_exp, amountbt, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
+                    Distribution {id, account_id, amount, amount_exp, amountbt, apikey, transaction_id}
                 }).collect()
             }).unwrap();
 
@@ -149,9 +150,20 @@ pub fn post_distribution(
     distribution: rocket::request::Form<DistributionShort>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("INSERT INTO distributions (account_id, amount, amount_exp, apikey, transaction_id) VALUES (:account_id, :amount, :amount_exp, :apikey, :transaction_id)",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.apikey, &distribution.transaction_id)) {
-        Ok(result) => Json(APIResponse::LastInsertId(result.last_insert_id())),
-        Err(err) => Json(APIResponse::Error(String::from(err.to_string())))
+    let re = Regex::new(r"^-?[0-9]+$").unwrap();
+    if re.is_match(&distribution.amountbt) {
+        match conn.prep_exec(
+            "INSERT INTO distributions (account_id, amount, amountbt, amount_exp, apikey, transaction_id) VALUES (:account_id, :amount, :amountbt, :amount_exp, :apikey, :transaction_id)",(&distribution.account_id, &distribution.amount, &distribution.amountbt, &distribution.amount_exp, &distribution.apikey, &distribution.transaction_id)) {
+            Ok(result) => Json(APIResponse::LastInsertId(result.last_insert_id())),
+            Err(err) => Json(APIResponse::Error(String::from(err.to_string())))
+        }
+    } else {
+        Json(APIResponse::Error(
+            (String::from(
+                "amountbt contains one or more non-numeric characters.",
+            )
+            )
+        ))
     }
 }
 
@@ -160,8 +172,18 @@ pub fn put_distribution(
     distribution: rocket::request::Form<Distribution>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
-    match conn.prep_exec("UPDATE distributions SET account_id = :account_id, amount = :amount, amount_exp = :amount_exp, transaction_id = :transaction_id where id = :id and apikey = :apikey",(&distribution.account_id, &distribution.amount, &distribution.amount_exp, &distribution.transaction_id, &distribution.id, &distribution.apikey)) {
-        Ok(result) => Json(APIResponse::Info(String::from_utf8_lossy(&result.info()).to_string())),
-        Err(err) => Json(APIResponse::Error(String::from(err.to_string()))),
+    let re = Regex::new(r"^-?[0-9]+$").unwrap();
+    if re.is_match(&distribution.amountbt) {
+        match conn.prep_exec("UPDATE distributions SET account_id = :account_id, amount = :amount, amountbt = :amountbt, amount_exp = :amount_exp, transaction_id = :transaction_id where id = :id and apikey = :apikey",(&distribution.account_id, &distribution.amount, &distribution.amountbt, &distribution.amount_exp, &distribution.transaction_id, &distribution.id, &distribution.apikey)) {
+            Ok(result) => Json(APIResponse::Info(String::from_utf8_lossy(&result.info()).to_string())),
+            Err(err) => Json(APIResponse::Error(String::from(err.to_string()))),
+        }
+    } else {
+        Json(APIResponse::Error(
+            (String::from(
+                "amountbt contains one or more non-numeric characters.",
+            )
+            )
+        ))
     }
 }

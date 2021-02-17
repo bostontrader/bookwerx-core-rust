@@ -43,14 +43,16 @@ CREATE TABLE distributions (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   account_id INT UNSIGNED NOT NULL,
   amount BIGINT NOT NULL,
+  amountbt VARCHAR(40) CHARACTER SET ascii NOT NULL,
   amount_exp TINYINT NOT NULL,
   apikey VARCHAR(45) NOT NULL,
   transaction_id INT UNSIGNED NOT NULL,
 
   PRIMARY KEY (id, apikey),
   FOREIGN KEY (account_id, apikey) REFERENCES accounts (id, apikey),
-  FOREIGN KEY (transaction_id, apikey) REFERENCES transactions (id, apikey)
+  FOREIGN KEY (transaction_id, apikey) REFERENCES transactions (id, apikey),
 
+  CHECK( AMOUNTBT REGEXP '^-?[0-9]+$' )
 );
 
 CREATE TABLE categories (

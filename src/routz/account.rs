@@ -149,6 +149,8 @@ pub fn post_account(
     account: rocket::request::Form<AccountShort>,
     mut conn: MyRocketSQLConn,
 ) -> Json<APIResponse> {
+    println!("{:?}", account);
+
     match conn.prep_exec("INSERT INTO accounts (apikey, currency_id, title) VALUES (:apikey, :currency_id, :title)",(
         &account.apikey, &account.currency_id, &account.title)) {
         Ok(result) => Json(APIResponse::LastInsertId(result.last_insert_id())),

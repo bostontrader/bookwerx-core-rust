@@ -156,6 +156,8 @@ One practical example would be an ISO-8601 string.  Said strings can have the qu
 
 Generally, the API sends and receives financial numeric amounts using a decimal floating point system.  Each number is represented as an integer significand and an integer exponent.  In this way we can _exactly_ store and transmit the numbers without being bothered with round-off errors.  It's the job of a UI to perform non-destructive rounding when necessary.
 
+This is just the tip of a general issue of [dealing with the amounts we encounter when dealing with crypto coins](https://gist.github.com/bostontrader/37ad3aba39d77e6f8a4e8212c02b25aa).
+
 ## Categories
 
 **bookwerx-core-rust** provides a system of categories so that you may define any number of categories and then tag accounts and transactions with any number of these categories.  It's easy to imagine that we might want to categorize accounts as "assets", "liabilities", etc., and perhaps categorize transactions as "deposits", "transfers", or "withdrawals".  Once you get the hang of this the ideas will flow freely.
