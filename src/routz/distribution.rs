@@ -94,13 +94,14 @@ fn get_distributions_private(
             result
                 .map(|x| x.unwrap())
                 .map(|row| {
-                    let (did, tid, aid, amount, amount_exp, apikey, title, time, notes) =
+                    let (did, tid, aid, amount, amountbt, amount_exp, apikey, title, time, notes) =
                         rocket_contrib::databases::mysql::from_row(row);
                     DistributionJoined {
                         id: did,
                         tid: tid,
                         aid: aid,
                         amount: amount,
+                        amountbt: amountbt,
                         amount_exp: amount_exp,
                         apikey: apikey,
                         account_title: title,
@@ -127,7 +128,7 @@ pub fn get_distributions_for_account(
     params.push(apikey.html_escape().to_mut().clone());
     params.push(account_id.html_escape().to_mut().clone());
 
-    get_distributions_private("SELECT d.id as did, t.id as tid, a.id as aid, amount, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and account_id = :account_id order by time", params, conn)
+    get_distributions_private("SELECT d.id as did, t.id as tid, a.id as aid, amount, amountbt, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and account_id = :account_id order by time", params, conn)
 }
 
 #[rocket::get("/distributions/for_tx?<apikey>&<transaction_id>")]
@@ -142,7 +143,7 @@ pub fn get_distributions_for_tx(
     params.push(apikey.html_escape().to_mut().clone());
     params.push(transaction_id.html_escape().to_mut().clone());
 
-    get_distributions_private("SELECT d.id as did, t.id as tid, a.id as aid, amount, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and transaction_id = :transaction_id order by time", params, conn)
+    get_distributions_private("SELECT d.id as did, t.id as tid, a.id as aid, amount, amountbt, amount_exp, d.apikey, title, time, notes from distributions as d join transactions as t on d.transaction_id = t.id join accounts as a on d.account_id = a.id where d.apikey = :apikey and transaction_id = :transaction_id order by time", params, conn)
 }
 
 #[rocket::post("/distributions", data = "<distribution>")]
@@ -159,9 +160,8 @@ pub fn post_distribution(
         }
     } else {
         Json(APIResponse::Error(
-            (String::from(
+            String::from(
                 "amountbt contains one or more non-numeric characters.",
-            )
             )
         ))
     }
@@ -180,9 +180,8 @@ pub fn put_distribution(
         }
     } else {
         Json(APIResponse::Error(
-            (String::from(
+            String::from(
                 "amountbt contains one or more non-numeric characters.",
-            )
             )
         ))
     }

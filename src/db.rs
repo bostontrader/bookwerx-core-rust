@@ -164,6 +164,7 @@ pub struct DistributionJoined {
     pub tid: u32,
     pub aid: u32,
     pub amount: i64,
+    pub amountbt: String,
     pub amount_exp: i8,
     pub apikey: String,
     pub account_title: String,
