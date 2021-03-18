@@ -42,11 +42,11 @@ pub fn get_distribution(
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<Distribution> =
-        conn.prep_exec("SELECT id, apikey, account_id, amount, amount_exp, transaction_id from distributions where id = :id and apikey = :apikey", params)
+        conn.prep_exec("SELECT id, apikey, account_id, amount, amountbt, amount_exp, transaction_id from distributions where id = :id and apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, apikey, account_id, amount, amount_exp, amountbt, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                    Distribution {id, apikey, account_id, amount, amount_exp, amountbt, transaction_id}
+                    let (id, apikey, account_id, amount, amountbt, amount_exp, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
+                    Distribution {id, apikey, account_id, amount, amountbt, amount_exp, transaction_id}
                 }).collect()
             }).unwrap();
 
@@ -71,11 +71,11 @@ pub fn get_distributions(
     params.push(apikey.html_escape().to_mut().clone());
 
     let vec: Vec<Distribution> =
-        conn.prep_exec("SELECT id, account_id, amount, amount_exp, amountbt, apikey, transaction_id from distributions where apikey = :apikey", params)
+        conn.prep_exec("SELECT id, account_id, amount, amountbt, amount_exp, apikey, transaction_id from distributions where apikey = :apikey", params)
             .map(|result| {
                 result.map(|x| x.unwrap()).map(|row| {
-                    let (id, account_id, amount, amount_exp, amountbt, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
-                    Distribution {id, account_id, amount, amount_exp, amountbt, apikey, transaction_id}
+                    let (id, account_id, amount, amountbt, amount_exp, apikey, transaction_id) = rocket_contrib::databases::mysql::from_row(row);
+                    Distribution {id, account_id, amount, amountbt, amount_exp, apikey, transaction_id}
                 }).collect()
             }).unwrap();
 
