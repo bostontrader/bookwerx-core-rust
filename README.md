@@ -27,9 +27,9 @@ But wait... there's more!  For those who wish to live dangerously bookwerx-core 
 
 ## Getting Started
 
-The easiest way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an [example UI](http://185.183.96.73:3005/) that demonstrates the API interaction with ***bookwerx-core***.
+The easiest way to get started is to explore [***bookwerx-ui***](https://github.com/bostontrader/bookwerx-ui-elm).  It provides an [example UI](http://94.74.116.6:3005/) that demonstrates the API interaction with ***bookwerx-core***.
 
-Using this UI you can connect to a [publicly visible demonstration server](http://185.183.96.73:3003), request an API key for your own use, and generally put the API to work.  The UI also guides you through a proper sequence of API calls.  For example, you cannot define an account until you have defined the currency that said account will use.  The UI will also show you the API requests that it creates as well as the responses that it receives.
+Using this UI you can connect to a [publicly visible demonstration server](http://94.74.116.6:3003), request an API key for your own use, and generally put the API to work.  The UI also guides you through a proper sequence of API calls.  For example, you cannot define an account until you have defined the currency that said account will use. 
 
 ## Installation
 
@@ -48,18 +48,20 @@ The care and feeding of these items are beyond the scope of these instructions..
 ```bash
 git clone https://github.com/bostontrader/bookwerx-core-rust.git
 cd bookwerx-core-rust
-cargo build
+cargo build --release
 cargo run --bin dbseed -- --help
 cargo run --bin server -- --help
 ```
 Note the syntax for the *cargo run* commands.  This executes the command and feeds the command-line arg '--help' to it.  Whereupon you can further dissect the operation.
 
 **dbseed** will brain-wipe your db and reseed to a minimal usable condition.  For example:
+
 ```bash
 cargo run --bin dbseed -- --conn mysql://root:supersecretpassword@172.17.0.2:3306 --dbname somedbname --seed dbseed.sql
 ```
 
 **server** is the actual server that you're lookin' to use.  The server needs to connect to a db that has been properly seeded, hence the prior step.  As an example for execution of the server:
+
 ```bash
 cargo run --bin server -- \
     --bind_ip 0.0.0.0 --bind_port 8000 \
@@ -67,10 +69,11 @@ cargo run --bin server -- \
     --mode test
 ```
 
+(Note: --mode test is presently required, but unused. )
 
 ## Configuration
 
-The binaries of **bookwerx-core-rust** do not do anything by default.  If you want it to do anything useful, you'll need to ensure that they get the correct configuration options.  You can deliver said options via the command line or the environment.
+The binaries of **bookwerx-core-rust** do not do anything by default.  If you want them to do anything useful, you'll need to ensure that they get the correct configuration options.  You can deliver said options via the command line or the environment.
 
 As described above, execute **server** or **dbseed** with the --help option to see the CLI choices.  Each option has a corresponding environment variable.
 
@@ -89,7 +92,7 @@ BCR_BIND_IP - An IP address for the http server to bind to.
 
 BCR_BIND_PORT - A port for the http server to bind to.
 
-BCR_MODE - Run the server in whatever mode.
+BCR_MODE - Run the server in whatever mode.  This is presently required, but unused.
 
 
 ### Rocket
@@ -104,11 +107,11 @@ Although **bookwerx-core-rust** is able to drop and rebuild the db from an initi
 
 ## REST vs GraphQL
 
-In this project we have a choice between using a RESTful API or GraphQL.  Although GraphQL is an interesting contender, after the smoke settled, only the RESTful API emerged from thunderdome.
+In this project we have a variety of choices for communication between clients and this server.  Two obvious choices are a RESTful API or GraphQL.  We have evaluated both choices. Although GraphQL is an interesting contender, after the smoke settled, only the RESTful API emerged from Thunderdome.
 
 One major problem with RESTful APIs is that there tends to be a proliferation of endpoints and input parameters in order to accommodate real-world usage.  Naming these things and managing them generally is a tedious (but tractable) exercise.  These woes led us to try using GraphQL.  Unfortunately doing so proved to be a disappointment.  
 
-We encountered the following general intractable issues:
+We encountered the following general intractable issues with GraphQL:
 
 * How can we efficiently execute the GraphQL queries?  Doing so requires some connection to the underlying MySQL db.  And doing that requires that we translate GraphQL queries into MySQL.  This is easier said than done.
 
@@ -130,7 +133,7 @@ Please notice that we must %encode the equal sign in the query string as %3d.
 
 Please also be aware that in more complex queries you may have parsing problems related to spaces around parentheses.
 
-Because of the woes associated with both ordinary REST and GraphQL we have implemented the /sql endpoint whereby the user can submit a string of SQL and get back expected results.  This feature is not for the faint-of-hearted because it requires knowledge of SQL generally as well as the underlying MySQL schema.  Not to mention the risk of SQL injection attacks.  Nevertheless, there are several safety features in place that can help you control this risk.
+Because of the woes associated with both ordinary REST and GraphQL we have implemented the /sql endpoint whereby the client can submit a string of SQL and get back expected results.  This feature is not for the faint-of-hearted because it requires knowledge of SQL generally as well as the underlying MySQL schema.  Not to mention the risk of SQL injection attacks.  Nevertheless, there are several safety features in place that can help you control this risk.
 
 First of all, we parse any SQL using [nom-sql](https://github.com/ms705/nom-sql), which is a full-blown SQL parser. An excellent choice for all your SQL parsing needs in general.
 

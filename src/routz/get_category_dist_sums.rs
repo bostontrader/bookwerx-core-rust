@@ -1,4 +1,5 @@
-use crate::dfp::DFP;
+//use crate::dfpx::DFPx;
+use crate::dfp::dfp::{DFP, Sign, dfp_add, dfp_from_string_exp};
 use rocket::get;
 use rocket::http::{RawStr, Status};
 use rocket_contrib::json;
@@ -109,7 +110,7 @@ pub fn get_category_dist_sums(
 
     let q = format!(
         "
-            SELECT account_id, amount, amount_exp
+            SELECT account_id, amountbt, amount_exp
                 FROM distributions AS ds
                 JOIN transactions as tx on tx.id = ds.transaction_id
             WHERE account_id in ( {} )
@@ -118,17 +119,17 @@ pub fn get_category_dist_sums(
         acct_sub_query, time_clause
     );
 
-    let vec: Vec<crate::db::BalanceResult> = conn
+    let vec: Vec<crate::db::BalanceResultBt> = conn
         .prep_exec(q, params)
         .map(|result| {
             result
                 .map(|x| x.unwrap())
                 .map(|row| {
-                    let (account_id, amount, amount_exp) =
+                    let (account_id, amountbt, amount_exp) =
                         rocket_contrib::databases::mysql::from_row(row);
-                    crate::db::BalanceResult {
+                    crate::db::BalanceResultBt {
                         account_id,
-                        amount,
+                        amountbt,
                         amount_exp,
                     }
                 })
@@ -152,7 +153,9 @@ pub fn get_category_dist_sums(
     let mut hm = HashMap::new();
 
     // 3.3 If we have requested decorations we will eventually need an "in clause" of account ids to work with.  It's tempting to build that into this loop now.  Resist the urge.  Doing so makes this needlessly complicated.  It's simple and fast enough to build the in_clause separately.
-    let mut sum: DFP = DFP { amount: 0, exp: 0 };
+    //let mut sum: DFPx = DFPx { amount: 0, exp: 0 };
+    let mut sum: DFP = DFP { amount: vec![], exp: 0, sign: Sign::Zero };
+
     let mut prior_account_id = 0;
     for v in vec {
         if v.account_id != prior_account_id {
@@ -171,15 +174,19 @@ pub fn get_category_dist_sums(
                 );
             }
             prior_account_id = v.account_id;
-            //sum = DFP { amount: v.amount, exp: v.amount_exp };
-            sum = DFP { amount: 0, exp: 0 };
+            //sum = DFPx { amount: v.amount, exp: v.amount_exp };
+            //sum = DFPx { amount: 0, exp: 0 };
+            sum = DFP { amount: vec![], exp: 0, sign: Sign::Zero };
+
         }
 
         // This records account_id is the same as the prior record, so just add the values
-        sum = sum.add(&DFP {
-            amount: v.amount,
-            exp: v.amount_exp,
-        });
+        //sum = sum.add(&DFPx {
+            //amount: v.amount,
+            //exp: v.amount_exp,
+        //});
+        sum = dfp_add( sum, dfp_from_string_exp(&v.amountbt, v.amount_exp) );
+
     }
 
     // 3.3.1 The above loop should have executed at least once so we should have a real v and sum.
@@ -291,8 +298,11 @@ pub fn get_category_dist_sums(
     // 7.3 Now iterate over all of the Decorations, if any and build the final result.
     let mut ret_val = Vec::new();
     for d in vec {
-        match hm.get(&d.account_id) {
-            Some(&v) => {
+        let asum = hm.get(&d.account_id).clone().unwrap();
+        //match hm.get(&d.account_id).clone() {
+        //match asum {
+
+            //Some(&v) => {
                 let n = crate::db::BalanceResultDecorated {
                     account: crate::db::AccountCurrency {
                         account_id: d.account_id,
@@ -302,15 +312,15 @@ pub fn get_category_dist_sums(
                             symbol: d.symbol,
                         },
                     },
-                    sum: v.sum,
+                    sum: (*asum).sum.clone(),
                 };
                 ret_val.push(n);
-            }
-            _ => {
+            //}
+            //_ => {
                 // This should never happen. Contemplate why.
-                panic!("max fubar error");
-            }
-        }
+                //panic!("max fubar error");
+            //}
+        //}
     }
 
     return crate::db::ApiResponseOld {

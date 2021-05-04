@@ -1,6 +1,6 @@
 [package]
 name = "bookwerx-core-rust"
-version = "0.5.1" #  VERSION
+version = "0.6.0" #  VERSION
 authors = ["Thomas Radloff <bostontrader@gmail.com>"]
 edition = "2018"
 

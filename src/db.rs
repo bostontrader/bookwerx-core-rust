@@ -1,4 +1,4 @@
-use crate::dfp::DFP;
+use crate::dfp::dfp::DFP;
 use rocket::http::Status;
 use rocket::request::FromForm;
 use rocket_contrib::database;
@@ -274,12 +274,19 @@ pub struct AccountCurrencyDecorations {
     pub symbol: String,
 }
 
-#[derive(Clone, Copy, Deserialize)] // A test parses a response into this struct.
+#[derive(Clone, Deserialize, Debug)] // A test parses a response into this struct.
 #[derive(Serialize)] // We send these as a json result.
 pub struct AcctSum {
     pub account_id: u32,
     pub sum: DFP,
 }
+
+//#[derive(Clone, Copy, Deserialize)] // A test parses a response into this struct.
+//#[derive(Serialize)] // We send these as a json result.
+//pub struct AcctSumx {
+    //pub account_id: u32,
+    //pub sum: DFPx,
+//}
 
 pub struct BalanceResult {
     pub account_id: u32,
@@ -287,6 +294,11 @@ pub struct BalanceResult {
     pub amount_exp: i8,
 }
 
+pub struct BalanceResultBt {
+    pub account_id: u32,
+    pub amountbt: String,
+    pub amount_exp: i8,
+}
 #[derive(Deserialize)] // A test parses a response into this struct.
 #[derive(Serialize)] // We send these as a json result.
 pub struct BalanceResultDecorated {

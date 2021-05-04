@@ -1,6 +1,7 @@
 use bookwerx_core_rust::db as D;
 use rocket::http::Status;
 use rocket::local::Client;
+use bookwerx_core_rust::dfp::dfp::{DFP, Sign, dfp_abs, dfp_add};
 
 pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::Category>) -> () {
     // 1. GET /category_dist_sums, bad category_id, no time_*.
@@ -28,8 +29,7 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 1);
-    assert_eq!(r.sums[0].sum.amount, 12);
-    assert_eq!(r.sums[0].sum.exp, 0);
+    assert_eq!(r.sums[0].sum, DFP { amount: vec![2, 1], exp: 0, sign: Sign::Positive });
 
     // 2.2 time_start.
     response = client
@@ -43,8 +43,7 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 1);
-    assert_eq!(r.sums[0].sum.amount, 9);
-    assert_eq!(r.sums[0].sum.exp, 0);
+    assert_eq!(r.sums[0].sum, DFP { amount: vec![9], exp: 0, sign: Sign::Positive });
 
     // 2.3 time_stop
     response = client
@@ -58,8 +57,7 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 1);
-    assert_eq!(r.sums[0].sum.amount, 7);
-    assert_eq!(r.sums[0].sum.exp, 0);
+    assert_eq!(r.sums[0].sum, DFP { amount: vec![7], exp: 0, sign: Sign::Positive });
 
     // 2.4 time_start and time_stop.
     response = client
@@ -73,11 +71,13 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 1);
-    assert_eq!(r.sums[0].sum.amount, 4);
-    assert_eq!(r.sums[0].sum.exp, 0);
+    assert_eq!(r.sums[0].sum, DFP { amount: vec![4], exp: 0, sign: Sign::Positive });
 
     // 3. GET /category_dist_sums, get two accounts (Cash in mattress, Cash in cookie jar) tagged with a single category (Assets)
     //  Examine the four permutations of time.
+
+    // The responses contain records in an indeterminate order.  If the |first record| is
+    // correct and the sum of the two == zero, then we know all is well.
 
     // 3.1 No time_*.
     response = client
@@ -90,10 +90,11 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 2);
-    assert_eq!(r.sums[0].sum.amount.abs(), 12);
-    assert_eq!(r.sums[0].sum.amount + r.sums[1].sum.amount, 0);
-    assert_eq!(r.sums[0].sum.exp, 0);
-    assert_eq!(r.sums[1].sum.exp, 0);
+    assert_eq!(dfp_abs(&(r.sums[0].sum) ), DFP { amount: vec![2, 1], exp: 0, sign: Sign::Positive });
+    assert_eq!(
+        dfp_add( r.sums[0].sum.clone(), r.sums[1].sum.clone()),
+        DFP { amount: vec![], exp: 0, sign: Sign::Zero }
+    );
 
     // 3.2 time_start.
     response = client
@@ -106,10 +107,11 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 2);
-    assert_eq!(r.sums[0].sum.amount.abs(), 9);
-    assert_eq!(r.sums[0].sum.amount + r.sums[1].sum.amount, 0);
-    assert_eq!(r.sums[0].sum.exp, 0);
-    assert_eq!(r.sums[1].sum.exp, 0);
+    assert_eq!(dfp_abs(&(r.sums[0].sum) ), DFP { amount: vec![9], exp: 0, sign: Sign::Positive });
+    assert_eq!(
+        dfp_add( r.sums[0].sum.clone(), r.sums[1].sum.clone()),
+        DFP { amount: vec![], exp: 0, sign: Sign::Zero }
+    );
 
     // 3.3 time_stop
     response = client
@@ -122,10 +124,11 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 2);
-    assert_eq!(r.sums[0].sum.amount.abs(), 7);
-    assert_eq!(r.sums[0].sum.amount + r.sums[1].sum.amount, 0);
-    assert_eq!(r.sums[0].sum.exp, 0);
-    assert_eq!(r.sums[1].sum.exp, 0);
+    assert_eq!(dfp_abs(&(r.sums[0].sum) ), DFP { amount: vec![7], exp: 0, sign: Sign::Positive });
+    assert_eq!(
+        dfp_add( r.sums[0].sum.clone(), r.sums[1].sum.clone()),
+        DFP { amount: vec![], exp: 0, sign: Sign::Zero }
+    );
 
     // 3.4 time_start and time_stop.
     response = client
@@ -138,10 +141,11 @@ pub fn category_dist_sums(client: &Client, apikey: &String, categories: &Vec<D::
     r = serde_json::from_str(&(response.body_string().unwrap())[..]).unwrap();
     assert_eq!(response.status(), Status::Ok);
     assert_eq!(r.sums.len(), 2);
-    assert_eq!(r.sums[0].sum.amount.abs(), 4);
-    assert_eq!(r.sums[0].sum.amount + r.sums[1].sum.amount, 0);
-    assert_eq!(r.sums[0].sum.exp, 0);
-    assert_eq!(r.sums[1].sum.exp, 0);
+    assert_eq!(dfp_abs(&(r.sums[0].sum) ), DFP { amount: vec![4], exp: 0, sign: Sign::Positive });
+    assert_eq!(
+        dfp_add( r.sums[0].sum.clone(), r.sums[1].sum.clone()),
+        DFP { amount: vec![], exp: 0, sign: Sign::Zero }
+    );
 
     // 3. Decorations
 

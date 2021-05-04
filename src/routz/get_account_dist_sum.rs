@@ -1,4 +1,5 @@
-use crate::dfp::DFP;
+//use crate::dfpx::DFPx;
+use crate::dfp::dfp::{DFP, Sign, dfp_add, dfp_from_string_exp};
 use rocket::get;
 use rocket::http::{RawStr, Status};
 use rocket_contrib::json;
@@ -32,7 +33,6 @@ pub fn get_account_dist_sum(
 ) -> crate::db::ApiResponseOld {
     // This is a vector of parameters that we recover from the request and feed into our sql statement
     let mut params = Vec::new();
-
     // We receive these arguments as &RawStr.  We must convert them into a form that the mysql parametrization can use.
     // WARNING! Push these in the same order they are used in the prep_exec function!
     params.push(account_id.html_escape().to_mut().clone());
@@ -65,7 +65,7 @@ pub fn get_account_dist_sum(
 
     let q = format!(
         "
-        SELECT ac.id, ds.amount, ds.amount_exp
+        SELECT ac.id, ds.amountbt, ds.amount_exp
         FROM accounts AS ac
         JOIN distributions AS ds ON ds.account_id = ac.id
         JOIN transactions AS tx ON tx.id = ds.transaction_id
@@ -76,17 +76,17 @@ pub fn get_account_dist_sum(
         time_clause
     );
 
-    let vec: Vec<crate::db::BalanceResult> = conn
+    let vec: Vec<crate::db::BalanceResultBt> = conn
         .prep_exec(q, params)
         .map(|result| {
             result
                 .map(|x| x.unwrap())
                 .map(|row| {
-                    let (account_id, amount, amount_exp) =
+                    let (account_id, amountbt, amount_exp) =
                         rocket_contrib::databases::mysql::from_row(row);
-                    crate::db::BalanceResult {
+                    crate::db::BalanceResultBt {
                         account_id,
-                        amount,
+                        amountbt,
                         amount_exp,
                     }
                 })
@@ -95,13 +95,16 @@ pub fn get_account_dist_sum(
         .unwrap();
 
     // We now have zero or more records to sum.
-    let mut sum: DFP = DFP { amount: 0, exp: 0 };
+    //let mut sum: DFPx = DFPx { amount: 0, exp: 0 };
+    let mut sum: DFP = DFP { amount: vec![], exp: 0, sign: Sign::Zero };
+
     for n in vec {
-        sum = sum.add(&DFP {
-            amount: n.amount,
-            exp: n.amount_exp,
-        });
+        //sum = sum.add(&DFPx { amount: n.amount, exp: n.amount_exp, });
+        sum = dfp_add( sum, dfp_from_string_exp(&n.amountbt, n.amount_exp) );
     }
+
+
+
 
     // Now build and return the http response.
     crate::db::ApiResponseOld {
